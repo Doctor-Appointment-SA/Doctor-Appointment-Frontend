@@ -1,14 +1,21 @@
 "use client";
 
+import AppointmentTime from "@/component/appointmentTime";
 import Calendar from "@/component/calendar";
 import DoctorList from "@/component/doctorList";
+import { DoctorProps } from "@/props/DoctorInfo";
 import React, { useState, useEffect } from "react";
 
 const patientAppointmentPage = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [selectedDoctor, setSelectedDoctor] = useState<DoctorProps | null>(
+    null
+  );
+  const [isDoctorListOpen, setIsDoctorListOpen] = useState(false);
+  const [isTimeModalOpen, setIsTimeModalOpen] = useState(false);
+  const [selectedTime, setSelectedTime] = useState("");
   useEffect(() => {
-    console.log(isOpen);
-  }, [isOpen]);
+    console.log(selectedDoctor);
+  }, [selectedDoctor]);
 
   return (
     <div className="flex flex-col items-center">
@@ -19,12 +26,25 @@ const patientAppointmentPage = () => {
         <p>ยังไม่ได้เลือกหมอ</p>
         <button
           className="bg-white px-1 rounded-[10px]"
-          onClick={() => setIsOpen((prev) => !prev)}
+          onClick={() => setIsDoctorListOpen((prev) => !prev)}
         >
           เลือกหมอ
         </button>
       </div>
-      <DoctorList isOpen={isOpen} setIsOpen={setIsOpen} />
+      <DoctorList
+        isDoctorListOpen={isDoctorListOpen}
+        setIsDoctorListOpen={setIsDoctorListOpen}
+        setSelectedDoctor={setSelectedDoctor}
+        setIsTimeModalOpen={setIsTimeModalOpen}
+      />
+      <AppointmentTime
+        isTimeModalOpen={isTimeModalOpen}
+        setIsTimeModalOpen={setIsTimeModalOpen}
+        selectedDoctor={selectedDoctor}
+        selectedTime={selectedTime}
+        setSelectedTime={setSelectedTime}
+        setIsDoctorListOpen={setIsDoctorListOpen}
+      />
     </div>
   );
 };
