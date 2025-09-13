@@ -20,14 +20,18 @@ const MONTHS = [
 ];
 
 interface Props {
-  selectedDate: number;
-  setSelectedDate: Dispatch<SetStateAction<number>>;
+  appointmentDate: string;
+  setAppointmentDate: Dispatch<SetStateAction<string>>;
 }
 
 const DAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
-export default function Calendar({ selectedDate, setSelectedDate }: Props) {
+export default function Calendar({
+  appointmentDate,
+  setAppointmentDate,
+}: Props) {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(0);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -110,7 +114,17 @@ export default function Calendar({ selectedDate, setSelectedDate }: Props) {
           <div key={index} className="aspect-square">
             {day && (
               <button
-                onClick={() => setSelectedDate(day)}
+                onClick={() => {
+                  setSelectedDate(day);
+                  let today =
+                    currentDate.getFullYear() +
+                    "-" +
+                    currentDate.getMonth() +
+                    "-" +
+                    selectedDate;
+                  console.log(today);
+                  setAppointmentDate(today);
+                }}
                 className={`w-full h-full flex items-center justify-center text-sm font-medium rounded-md transition-colors hover:bg-muted ${
                   day === selectedDate
                     ? "bg-blue-500 text-white hover:bg-blue-600"

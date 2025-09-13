@@ -5,28 +5,43 @@ import Calendar from "@/component/calendar";
 import DoctorList from "@/component/doctorList";
 import DoctorListItem from "@/component/doctorListItem";
 import NavButton from "@/component/navButton";
-import { DoctorProps } from "@/props/DoctorInfo";
+import { DoctorProps } from "@/props/doctorInfo";
+import axios from "axios";
 import React, { useState, useEffect } from "react";
 
 const TimeList = ["9.00", "10.00", "11.00", "12.00", "13.00", "14.00"];
 
-const patientAppointmentPage = () => {
+const PatientAppointmentPage = () => {
   const [selectedDoctor, setSelectedDoctor] = useState<DoctorProps | null>(
     null
   );
   const [isDoctorListOpen, setIsDoctorListOpen] = useState(false);
   const [isTimeModalOpen, setIsTimeModalOpen] = useState(false);
   const [selectedTime, setSelectedTime] = useState("");
-  const [selectedDate, setSelectedDate] = useState(0);
+  const [appointmentDate, setAppointmentDate] = useState("");
 
-  useEffect(() => {
-    console.log(selectedDoctor);
-  }, [selectedDoctor]);
+  // useEffect(() => {
+  //   console.log(selectedDoctor);
+  // }, [selectedDoctor]);
+
+  const handleSubmit = async () => {
+    try {
+      const res = await axios.post("http://localhost:3001/appointment", {
+        patient_id: "3a266ef8-2267-4be7-849a-924f8a82ee7f",
+        doctor_id: "9232ab71-a805-4ad7-89e6-2ad22b24679a",
+        appoint_date: appointmentDate + "T" + selectedTime + ":00.000Z",
+        status: "Pending",
+      });
+      console.log("Response:", res.data)
+    } catch (error) {
+      console.log("Error on creating appointment:", error);
+    }
+  };
 
   return (
     <div className="flex flex-col items-center mt-4">
       <p className="w-[90%] text-start text-[20px] mb-2">นัดหมอ</p>
-      <Calendar selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
+      <Calendar appointmentDate={appointmentDate} setAppointmentDate={setAppointmentDate} />
       <div className="w-[90%]">
         <p className="text-start text-[20px] my-4">หมอ</p>
         {!(selectedDoctor && selectedTime) && (
@@ -82,7 +97,7 @@ const patientAppointmentPage = () => {
           text="ยืนยัน"
           textColor="#F5F5F5"
           bgColor="#2C2C2C"
-          onClick={() => {}}
+          onClick={handleSubmit}
         />
       </div>
 
@@ -107,4 +122,4 @@ const patientAppointmentPage = () => {
   );
 };
 
-export default patientAppointmentPage;
+export default PatientAppointmentPage;

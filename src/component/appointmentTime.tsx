@@ -1,6 +1,6 @@
 import React, { Dispatch, SetStateAction, useState } from "react";
 import DoctorListItem from "./doctorListItem";
-import { DoctorProps } from "@/props/DoctorInfo";
+import { DoctorProps } from "@/props/doctorInfo";
 import NavButton from "./navButton";
 
 interface Props {

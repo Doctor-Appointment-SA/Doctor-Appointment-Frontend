@@ -1,4 +1,4 @@
-import { DoctorProps } from "@/props/DoctorInfo";
+import { DoctorProps } from "@/props/doctorInfo";
 import React, { Dispatch, SetStateAction } from "react";
 
 interface Props {

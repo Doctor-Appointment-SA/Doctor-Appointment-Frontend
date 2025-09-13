@@ -1,7 +1,7 @@
 import React, { Dispatch, SetStateAction, useState } from "react";
 import DoctorListItem from "./doctorListItem";
 import AppointmentTime from "./appointmentTime";
-import { DoctorProps } from "@/props/DoctorInfo";
+import { DoctorProps } from "@/props/doctorInfo";
 
 interface Props {
   isDoctorListOpen: boolean;
