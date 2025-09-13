@@ -5,7 +5,7 @@ interface Props {
   profile: string;
   name: string;
   specialty: string;
-  doctorList?: boolean; //if use outside of doctorListComponent set doctorList = false
+  status?: string;
   setSelectedDoctor?: Dispatch<SetStateAction<DoctorProps | null>>;
   setIsDoctorListOpen?: Dispatch<SetStateAction<boolean>>;
   setIsTimeModalOpen?: Dispatch<SetStateAction<boolean>>;
@@ -15,17 +15,17 @@ const DoctorListItem = ({
   profile,
   name,
   specialty,
-  doctorList = true,
+  status = "doctorList",
   setSelectedDoctor,
   setIsDoctorListOpen,
   setIsTimeModalOpen,
 }: Props) => {
   return (
     <div
-      className="bg-[#8DC5F5] flex gap-2 p-4 rounded-[10px]"
+      className="bg-[#8DC5F5] flex justify-between p-4 rounded-[10px]"
       onClick={() => {
         if (
-          doctorList &&
+          status === "doctorList" &&
           setSelectedDoctor &&
           setIsDoctorListOpen &&
           setIsTimeModalOpen
@@ -36,15 +36,26 @@ const DoctorListItem = ({
         }
       }}
     >
-      <img
-        src={profile}
-        alt="Doctor Profile"
-        className="w-12 h-12 rounded-full"
-      />
-      <div className="flex flex-col justify-center">
-        <p>{name}</p>
-        <p>{specialty}</p>
+      <div className="flex gap-2">
+        <img
+          src={profile}
+          alt="Doctor Profile"
+          className="w-12 h-12 rounded-full"
+        />
+        <div className="flex flex-col justify-center">
+          <p>{name}</p>
+          <p>{specialty}</p>
+        </div>
       </div>
+
+      {status === "appointment" && setIsDoctorListOpen && (
+        <button
+          className="bg-white px-1 rounded-[10px] p-2 hover:cursor-pointer"
+          onClick={() => setIsDoctorListOpen((prev) => !prev)}
+        >
+          เปลี่ยนหมอ
+        </button>
+      )}
     </div>
   );
 };

@@ -22,6 +22,8 @@ const AppointmentTime = ({
   selectedTime,
   setIsDoctorListOpen,
 }: Props) => {
+  const [tempTime, setTempTime] = useState("");
+
   return (
     <div className="w-full">
       {isTimeModalOpen && (
@@ -45,7 +47,7 @@ const AppointmentTime = ({
               profile={selectedDoctor?.profile ?? ""}
               name={selectedDoctor?.name ?? ""}
               specialty={selectedDoctor?.specialty ?? ""}
-              doctorList={false}
+              status="appointmentTime"
             />
 
             {/* select appointment time section */}
@@ -54,12 +56,12 @@ const AppointmentTime = ({
                 <button
                   key={time}
                   className={`py-2 px-3 rounded-[10px] ${
-                    selectedTime === time
+                    tempTime === time
                       ? "text-[#F5F5F5] bg-[#14AE5C]"
                       : "text-[#757575] bg-[#F5F5F5]"
                   }`}
                   onClick={() => {
-                    setSelectedTime(time);
+                    setTempTime(time);
                   }}
                 >
                   {time}
@@ -76,6 +78,7 @@ const AppointmentTime = ({
                 onClick={() => {
                   setIsTimeModalOpen(false);
                   setIsDoctorListOpen(true);
+                  setTempTime("");
                 }}
               />
               <NavButton
@@ -84,6 +87,8 @@ const AppointmentTime = ({
                 bgColor="#757575"
                 onClick={() => {
                   setIsTimeModalOpen(false);
+                  setSelectedTime(tempTime);
+                  setTempTime("");
                 }}
               />
             </div>
