@@ -1,40 +1,75 @@
-// Simple fetch wrapper with JSON + error handling
+// api.ts
+import axios, { AxiosError, AxiosInstance } from 'axios';
+
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
-async function request<T>(
-  path: string,
-  opts: { method?: HttpMethod; body?: unknown; headers?: Record<string,string> } = {},
-  base = process.env.NEXT_PUBLIC_API_GATEWAY_URL
-): Promise<T> {
-  if (!base) throw new Error("Missing NEXT_PUBLIC_API_GATEWAY_URL");
-  const url = `${base}${path}`;
+// ---- baseURL (use your env; fallback for dev) ----
+const baseURL =
+  process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:4001/api';
+if (!baseURL) throw new Error("Missing NEXT_PUBLIC_API_GATEWAY_URL");
 
-  const res = await fetch(url, {
-    method: opts.method ?? "GET",
-    headers: {
-      "Content-Type": "application/json",
-      ...(opts.headers ?? {}),
-    },
-    body: opts.body ? JSON.stringify(opts.body) : undefined,
-    // include credentials if your gateway uses cookies:
-    // credentials: "include",
-    cache: "no-store", // for SSR freshness; adjust per use-case
-  });
+// ---- axios instance ----
+export const apiClient: AxiosInstance = axios.create({
+  baseURL,
+  headers: { "Content-Type": "application/json" },
+  // withCredentials: true, // uncomment if your backend uses cookies
+});
 
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`API ${res.status} ${res.statusText}: ${text}`);
+// (optional) attach Bearer token automatically
+apiClient.interceptors.request.use((config: any) => {
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('access_token');
+    if (token) config.headers.Authorization = `Bearer ${token}`;
   }
-  return (await res.json()) as T;
+  return config;
+});
+
+// unified error (similar to your fetch version’s thrown text)
+export class ApiError extends Error {
+  status?: number;
+  data?: unknown;
+  constructor(message: string, status?: number, data?: unknown) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.data = data;
+  }
 }
 
+// ---- generic request used by helpers below ----
+async function request<T>(
+  path: string,
+  opts: { method?: HttpMethod; body?: unknown; headers?: Record<string, string> } = {}
+): Promise<T> {
+  try {
+    const res = await apiClient.request<T>({
+      url: path,
+      method: opts.method ?? "GET",
+      headers: opts.headers,
+      data: opts.body, // axios JSON-serializes objects automatically
+      // timeout: 15000, // optional
+    });
+    return res.data;
+  } catch (e) {
+    const err = e as AxiosError;
+    const status = err.response?.status;
+    const statusText = err.response?.statusText ?? '';
+    const data = err.response?.data;
+    const text = typeof data === 'string' ? data : JSON.stringify(data ?? '');
+    throw new ApiError(`API ${status ?? ''} ${statusText}: ${text}`, status, data);
+  }
+}
+
+// ---- public helpers (same shape as your fetch wrapper) ----
 export const api = {
-  get: <T>(path: string, headers?: Record<string,string>) =>
+  get:  <T>(path: string, headers?: Record<string,string>) =>
     request<T>(path, { method: "GET", headers }),
   post: <T>(path: string, body?: unknown, headers?: Record<string,string>) =>
     request<T>(path, { method: "POST", body, headers }),
   put:  <T>(path: string, body?: unknown, headers?: Record<string,string>) =>
     request<T>(path, { method: "PUT", body, headers }),
+  patch:<T>(path: string, body?: unknown, headers?: Record<string,string>) =>
+    request<T>(path, { method: "PATCH", body, headers }),
   del:  <T>(path: string, headers?: Record<string,string>) =>
     request<T>(path, { method: "DELETE", headers }),
 };
