@@ -1,0 +1,15 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\src",
+    "\\src\\app",
+    "\\src\\app\\mock\\medicines",
+    "\\src\\app\\mock\\prescriptions",
+    "\\src\\app\\mock\\whoami",
+    "\\src\\components",
+    "\\src\\components\\appointment",
+    "\\src\\components\\authen"
+  ],
+  "SelectedNode": "\\src\\app\\mock",
+  "PreviewInSolutionExplorer": false
+}
