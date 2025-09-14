@@ -1,14 +1,13 @@
 "use client";
 
-import AppointmentTime from "@/component/appointmentTime";
-import Calendar from "@/component/calendar";
-import DoctorList from "@/component/doctorList";
-import DoctorListItem from "@/component/doctorListItem";
-import NavButton from "@/component/navButton";
-import { api } from "@/lib/api";
+import AppointmentTime from "@/components/appointment/appointmentTime";
+import Calendar from "@/components/appointment/calendar";
+import DoctorList from "@/components/appointment/doctorList";
+import DoctorListItem from "@/components/appointment/doctorListItem";
+import NavButton from "@/components/appointment/navButton";
 import { DoctorProps } from "@/props/doctorInfo";
 import axios from "axios";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
 const TimeList = ["9:00", "10:00", "11:00", "12:00", "13:00", "14:00"];
 
@@ -30,7 +29,6 @@ const PatientAppointmentPage = () => {
   const whoAmI = async () => {
     try {
       const token = localStorage.getItem("access_token");
-
       // Call your API with Authorization header
       // const user = await api.get("/auth/whoami", {
       //   Authorization: `Bearer ${token}`,
@@ -57,13 +55,22 @@ const PatientAppointmentPage = () => {
         return;
       }
       console.log("User authorized:", user);
-      console.log(appointmentDate + "T" + selectedTime + ":00.000Z");
-      const res = await axios.post("http://localhost:3001/appointment", {
-        patient_id,
-        doctor_id: "8142b6ee-83f2-4b0c-ab81-385a105e86f5",
-        appoint_date: appointmentDate + "T" + selectedTime + ":00.000Z",
-        status: "Pending",
-      });
+      console.log(selectedDoctor?.id);
+      const token = localStorage.getItem("access_token");
+      const res = await axios.post(
+        "http://localhost:3001/appointment",
+        {
+          // patient_id,
+          doctor_id: selectedDoctor?.id,
+          appoint_date: appointmentDate + "T" + selectedTime + ":00.000Z",
+          status: "Pending",
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       console.log("Response:", res.data);
     } catch (error) {
       console.log("Error on creating appointment:", error);

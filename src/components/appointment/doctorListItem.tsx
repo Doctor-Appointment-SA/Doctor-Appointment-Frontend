@@ -1,10 +1,12 @@
 import { DoctorProps } from "@/props/doctorInfo";
-import React, { Dispatch, SetStateAction } from "react";
+import axios from "axios";
+import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 interface Props {
   profile: string;
   name: string;
   specialty: string;
+  doctorId?: string;
   status?: string;
   setSelectedDoctor?: Dispatch<SetStateAction<DoctorProps | null>>;
   setIsDoctorListOpen?: Dispatch<SetStateAction<boolean>>;
@@ -15,6 +17,7 @@ const DoctorListItem = ({
   profile,
   name,
   specialty,
+  doctorId,
   status = "doctorList",
   setSelectedDoctor,
   setIsDoctorListOpen,
@@ -30,7 +33,7 @@ const DoctorListItem = ({
           setIsDoctorListOpen &&
           setIsTimeModalOpen
         ) {
-          setSelectedDoctor({ profile, name, specialty });
+          setSelectedDoctor({ id: doctorId ?? "", profile, name, specialty });
           setIsDoctorListOpen(false);
           setIsTimeModalOpen(true);
         }
