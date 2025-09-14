@@ -12,7 +12,7 @@ interface Props {
   setIsDoctorListOpen: Dispatch<SetStateAction<boolean>>;
 }
 
-const TimeList = ["9.00", "10.00", "11.00", "12.00", "13.00", "14.00"];
+const TimeList = ["9:00", "10:00", "11:00", "12:00", "13:00", "14:00"];
 
 const AppointmentTime = ({
   isTimeModalOpen,
