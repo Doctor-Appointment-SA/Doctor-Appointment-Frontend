@@ -1,7 +1,7 @@
 # Frontend
 repo นี่เป็น Frontend สำหรับระบบนัดหมายแพทย์ ใช้ Next.js โดยทั้งทีมจะใช้ repo frontend อันเดียวกัน แต่เชื่อมต่อกับหลาย backend service ที่แยก repo กัน:
 - Authentication        https://github.com/Doctor-Appointment-SA/Authentication-Service.git
-๊- User Profile
+- User Profile
 - Appointment           https://github.com/Doctor-Appointment-SA/Scheduling-Service.git
 - Pharmacy
 - Payment
@@ -45,11 +45,11 @@ npm run dev
 สถาปัตยกรรมที่ใช้คือ Service-based Architecture โดยแยก backend เป็น 5 บริการหลัก
 และใช้ Next.js Frontend เป็น entry point เดียวสำหรับผู้ใช้งาน
 
-- Frontend (Next.js):         รับผิดชอบ UI/UX, Routing, State
-- Authentication Service:     จัดการ login, register, JWT, refresh token
+- Frontend (Next.js):         รับผิดชอบ UI/UX
+- Authentication Service:     จัดการยืนยันตัวตน login, register
 - User Profile Service:       เก็บข้อมูลผู้ป่วย/แพทย์
 - Appointment Service:        ระบบนัดหมายแพทย์
-- Pharmacy Service:           จัดการข้อมูลยา/การสั่งจ่าย
-- Payment Service:            การชำระเงินและใบเสร็จ
+- Pharmacy Service:           จัดการข้อมูลยา/การสั่งจ่ายยา
+- Payment Service:            การชำระเงิน
 
 # Demo video
