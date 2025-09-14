@@ -1,7 +1,7 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import { AuthProvider } from "@/lib/auth";
-import { Noto_Sans_Thai } from "next/font/google";
+import { Inter } from "next/font/google";
+import { AuthProvider } from "@/components/authen/auth";
 
 const notoSansThai = Noto_Sans_Thai({
   subsets: ["thai"],

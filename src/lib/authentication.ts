@@ -1,17 +1,17 @@
 import { api } from "@/lib/api";
 
 type Login = {
-  username: String;
-  password: String;
+  username: string;
+  password: string;
 };
 
 type Register = {
-  id_card: String;
-  name: String;
-  lastname: String;
-  phone: String;
-  password: String;
-  confirmPassword: String;
+  id_card: string;
+  name: string;
+  lastname: string;
+  phone: string;
+  password: string;
+  confirmPassword: string;
 };
 
 export async function Login(payload: { username: string; password: string }) {
