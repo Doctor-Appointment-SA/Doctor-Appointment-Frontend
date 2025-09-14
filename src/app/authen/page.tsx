@@ -9,26 +9,31 @@ enum AuthTab {
   REGISTER = "register",
 }
 
+type LoginPayload = {
+  username: string;
+  password: string;
+};
+
+type RegisterPayload = {
+  id_card: string;
+  name: string;
+  lastname: string;
+  phone: string;
+  password: string;
+  confirmPassword: string;
+};
+
 const Authentication = () => {
   const [activeTab, setActiveTab] = useState<AuthTab>(AuthTab.LOGIN);
 
-  const handleSubmit = async (payload: any) => {
-    // payload = {username: "HN25000003", password: "mypassword"};
-    // payload = {
-    //   id_card: "1234567890129",
-    //   name: "John4",
-    //   lastname: "Doe",
-    //   phone: "0890000000",
-    //   password: "mypassword",
-    //   confirmPassword: "mypassword",
-    // };
-    console.log(`${activeTab} form submitted:`, payload);
+  const handleLoginSubmit = async (payload: LoginPayload) => {
+    console.log(`${AuthTab.LOGIN} form submitted:`, payload);
+    await Login(payload);
+  };
 
-    if (activeTab === AuthTab.LOGIN) {
-      Login(payload);
-    } else {
-      Register(payload);
-    }
+  const handleRegisterSubmit = async (payload: RegisterPayload) => {
+    console.log(`${AuthTab.REGISTER} form submitted:`, payload);
+    await Register(payload);
   };
 
   return (
@@ -39,7 +44,7 @@ const Authentication = () => {
           <div className="flex justify-center text-2xl font-semibold text-center rounded-md overflow-hidden">
             <button
               className={`w-1/2 p-2 ${
-                activeTab === "login"
+                activeTab === AuthTab.LOGIN
                   ? "bg-white text-blue-600"
                   : "bg-gray-200 text-gray-600"
               }`}
@@ -62,13 +67,13 @@ const Authentication = () => {
           {/* Form */}
           <div>
             <div className="text-2xl font-semibold">
-              {activeTab === "login" ? "Sign In" : "Register"}
+              {activeTab === AuthTab.LOGIN ? "Sign In" : "Register"}
             </div>
 
-            {activeTab === "login" ? (
-              <LoginForm onSubmit={(data) => handleSubmit(data)} />
+            {activeTab === AuthTab.LOGIN ? (
+              <LoginForm onSubmit={handleLoginSubmit} />
             ) : (
-              <RegisterForm onSubmit={(data) => handleSubmit(data)} />
+              <RegisterForm onSubmit={handleRegisterSubmit} />
             )}
           </div>
         </div>

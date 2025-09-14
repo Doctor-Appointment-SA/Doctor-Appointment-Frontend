@@ -1,19 +1,21 @@
 "use client";
 import React, { useState } from "react";
 
+type FormData = {
+  id_card: string;
+  name: string;
+  lastname: string;
+  phone: string;
+  password: string;
+  confirmPassword: string;
+};
+
 type RegisterFormProps = {
-  onSubmit: (data: {
-    id_card: string;
-    name: string;
-    lastname: string;
-    phone: string;
-    password: string;
-    confirmPassword: string;
-  }) => void;
+  onSubmit: (data: FormData) => void;
 };
 
 export const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit }) => {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<FormData>({
     id_card: "",
     name: "",
     lastname: "",
@@ -22,11 +24,11 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit }) => {
     confirmPassword: "",
   });
 
-  const handleChange = (field: string, value: string) => {
+  const handleChange = (field: keyof FormData, value: string) => {
     setForm({ ...form, [field]: value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     onSubmit(form);
   };
@@ -45,8 +47,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit }) => {
           {input.label}
           <input
             type={input.type}
-            value={(form as any)[input.key]}
-            onChange={(e) => handleChange(input.key, e.target.value)}
+            value={form[input.key as keyof FormData]}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              handleChange(input.key as keyof FormData, e.target.value)
+            }
             className="border border-gray-300 p-2 rounded-md bg-white"
             required
           />

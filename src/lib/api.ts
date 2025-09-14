@@ -1,11 +1,10 @@
-// api.ts
-import axios, { AxiosError, AxiosInstance } from 'axios';
+import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "axios";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 // ---- baseURL (use your env; fallback for dev) ----
 const baseURL =
-  process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:4001/api';
+  process.env.NEXT_PUBLIC_API_GATEWAY_URL || "http://localhost:4001/api";
 if (!baseURL) throw new Error("Missing NEXT_PUBLIC_API_GATEWAY_URL");
 
 // ---- axios instance ----
@@ -16,10 +15,12 @@ export const apiClient: AxiosInstance = axios.create({
 });
 
 // (optional) attach Bearer token automatically
-apiClient.interceptors.request.use((config: any) => {
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('access_token');
-    if (token) config.headers.Authorization = `Bearer ${token}`;
+apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
   return config;
 });
@@ -30,7 +31,7 @@ export class ApiError extends Error {
   data?: unknown;
   constructor(message: string, status?: number, data?: unknown) {
     super(message);
-    this.name = 'ApiError';
+    this.name = "ApiError";
     this.status = status;
     this.data = data;
   }
@@ -53,23 +54,23 @@ async function request<T>(
   } catch (e) {
     const err = e as AxiosError;
     const status = err.response?.status;
-    const statusText = err.response?.statusText ?? '';
+    const statusText = err.response?.statusText ?? "";
     const data = err.response?.data;
-    const text = typeof data === 'string' ? data : JSON.stringify(data ?? '');
-    throw new ApiError(`API ${status ?? ''} ${statusText}: ${text}`, status, data);
+    const text = typeof data === "string" ? data : JSON.stringify(data ?? "");
+    throw new ApiError(`API ${status ?? ""} ${statusText}: ${text}`, status, data);
   }
 }
 
 // ---- public helpers (same shape as your fetch wrapper) ----
 export const api = {
-  get:  <T>(path: string, headers?: Record<string,string>) =>
+  get: <T>(path: string, headers?: Record<string, string>) =>
     request<T>(path, { method: "GET", headers }),
-  post: <T>(path: string, body?: unknown, headers?: Record<string,string>) =>
+  post: <T>(path: string, body?: unknown, headers?: Record<string, string>) =>
     request<T>(path, { method: "POST", body, headers }),
-  put:  <T>(path: string, body?: unknown, headers?: Record<string,string>) =>
+  put: <T>(path: string, body?: unknown, headers?: Record<string, string>) =>
     request<T>(path, { method: "PUT", body, headers }),
-  patch:<T>(path: string, body?: unknown, headers?: Record<string,string>) =>
+  patch: <T>(path: string, body?: unknown, headers?: Record<string, string>) =>
     request<T>(path, { method: "PATCH", body, headers }),
-  del:  <T>(path: string, headers?: Record<string,string>) =>
+  del: <T>(path: string, headers?: Record<string, string>) =>
     request<T>(path, { method: "DELETE", headers }),
 };
