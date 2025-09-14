@@ -1,9 +1,11 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import { AuthProvider } from "@/lib/auth";
+import { Noto_Sans_Thai } from "next/font/google";
 
-const inter = Inter({ subsets: ["latin"] });
+const notoSansThai = Noto_Sans_Thai({
+  subsets: ["thai"],
+});
 
 export const metadata: Metadata = {
   title: "SA Doctor App",
@@ -13,7 +15,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={notoSansThai.className}>
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
