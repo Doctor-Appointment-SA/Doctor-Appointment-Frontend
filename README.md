@@ -37,7 +37,7 @@ npm run dev
                             ทำ Service การทำ Authentication ทั้งหน้าบ้านหลังบ้าน
 2. มติ วรสิงห์                 ทำ Service การทำ Profile (Doctor, Patient Homepage)               
                             ทั้งหน้างบ้านและหลังบ้าน
-3. พัชรพล ธูปประสม            https://github.com/Doctor-Appointment-SA/Scheduling-Service.git
+3. พัชรพล ธูปประสม           Github: Patcharaphol https://github.com/Doctor-Appointment-SA/Scheduling-Service.git
                             ทำ Service การทำ Appointment ทั้งหน้าบ้านหลังบ้าน
 4. กฤติน ชัยอุดมกิจ            ทำ Service การทำ Pharmacy ทั้งหน้าบ้านหลังบ้าน
 
