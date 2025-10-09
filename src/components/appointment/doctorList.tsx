@@ -22,11 +22,13 @@ const DoctorList = ({
   const fetchDoctor = async () => {
     try {
       const token = localStorage.getItem("access_token");
-      const res = await axios.get("http://localhost:3001/doctor", {
+      const res = await axios.get("http://localhost:8080/api/doctor"
+        , {
         headers: {
           Authorization: `Bearer ${token}`, // ถ้าใช้ JWT ใน localStorage
         },
-      });
+      }
+    );
       setDoctorList(res.data);
     } catch (error) {
       console.log("Error on fetching Doctor:", error);
