@@ -1,15 +1,10 @@
-# --- build stage ---
-FROM node:20 AS builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build && npm prune --omit=dev
-
-# --- runtime stage ---
 FROM node:20-alpine
 WORKDIR /app
-ENV NODE_ENV=production
-COPY --from=builder /app ./
+
+# ติดตั้ง deps จาก lockfile (เร็วสุด)
+COPY package*.json ./
+RUN npm ci --no-audit --progress=false
+
+# dev: โค้ดจะมาจาก bind-mount (volumes) ไม่ต้อง COPY .
 EXPOSE 3000
-CMD ["npm", "start"]
+CMD ["npm","run","dev"]
