@@ -1,13 +1,14 @@
 "use client";
 
 import AppointmentTime from "@/components/appointment/appointmentTime";
-import Calendar from "@/components/appointment/calendar";
 import DoctorList from "@/components/appointment/doctorList";
 import DoctorListItem from "@/components/appointment/doctorListItem";
 import NavButton from "@/components/appointment/navButton";
 import { DoctorProps } from "@/props/doctorInfo";
 import axios from "axios";
 import React, { useState } from "react";
+import dynamic from "next/dynamic";
+const Calendar = dynamic(() => import("@/components/appointment/calendar"), { ssr: false });
 
 const TimeList = ["9:00", "10:00", "11:00", "12:00", "13:00", "14:00"];
 
