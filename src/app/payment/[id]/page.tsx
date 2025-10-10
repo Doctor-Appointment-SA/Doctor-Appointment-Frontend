@@ -3,27 +3,19 @@
 import { CreatePayment, PrescriptionItem } from "@/lib/payment";
 import { PaymentMethod, Prescription } from "@/type/payment";
 import { useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
-const medicine = [
-  {
-    name: "A",
-    cost: 1000,
-  },
-  {
-    name: "Para",
-    cost: 3000,
-  },
-];
-
-type PaymentType = "Credit" | "PromptPay" | "Bank" | "Cash";
-
 const payment = () => {
+  const router = useRouter();
+
   const [delivery, setDelivery] = useState<boolean>();
-  const [payment, setPayment] = useState<PaymentType>();
+  const [payment, setPayment] = useState<PaymentMethod>();
   const [prescription, setPrescription] = useState<Prescription>();
   const { id } = useParams<{ id: string }>();
 
+  console.log("id", id);
+  // cal total cost
   const total = useMemo(() => {
     return (
       prescription?.prescription_item?.reduce((acc, item) => {
@@ -34,15 +26,26 @@ const payment = () => {
     );
   }, [prescription]);
 
-  const fetchPaymentItem = async (payment_id: string) => {
+  // fetch medicine
+  const fetchPaymentItem = async (prescription_id: string) => {
     // console.log(`${AuthTab.LOGIN} form submitted:`, payload);
-    const data: Prescription = await PrescriptionItem(payment_id);
+    const data: Prescription = await PrescriptionItem(prescription_id);
     console.log("data", data);
     setPrescription(data);
   };
 
-  const handleSubmit = async (prescription_id:string, method:PaymentMethod, cost:number) => {
-    const data = await CreatePayment(prescription_id, method, cost);
+  // submit to create the payment record
+  const handleSubmit = async (
+    prescription_id: string,
+    method: PaymentMethod,
+    delivery: boolean,
+    cost: number
+  ) => {
+    // console.log("pahment", payment, typeof payment);
+    const created = await CreatePayment(prescription_id, method, cost);
+    console.log("created:", created);
+    const payment_id = created.id;
+    router.push(`/payment/confirm/${payment_id}`);
   };
 
   useEffect(() => {
@@ -118,19 +121,33 @@ const payment = () => {
         >
           <div className="text-lg font-semibold">วิธีการชำระเงิน</div>
           <label>
-            <input type="radio" name="payment" value="Credit" />{" "}
+            <input type="radio" name="payment" value="CREDIT" />{" "}
             บัตรเครดิต/เดบิต
           </label>
           <label>
-            <input type="radio" name="payment" value="PromptPay" /> พร้อมเพย์
+            <input type="radio" name="payment" value="PROMPTPAY" /> พร้อมเพย์
           </label>
           <label>
-            <input type="radio" name="payment" value="Bank" /> โอนเงินผ่านธนาคาร
+            <input type="radio" name="payment" value="BANK" /> โอนเงินผ่านธนาคาร
           </label>
           <label>
-            <input type="radio" name="payment" value="Cash" /> เก็บเงินปลายทาง
+            <input type="radio" name="payment" value="CASH" /> เก็บเงินปลายทาง
           </label>
         </div>
+
+        {/* confirm button */}
+        <button
+          onClick={() => {
+            if (!prescription?.id || !payment) {
+              alert("กรุณาเลือกวิธีการชำระเงิน");
+              return;
+            }
+            handleSubmit(prescription.id, payment, delivery, total);
+          }}
+          className="mt-4 w-full py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg shadow-md transition-all"
+        >
+          ถัดไป
+        </button>
       </div>
     </main>
   );
