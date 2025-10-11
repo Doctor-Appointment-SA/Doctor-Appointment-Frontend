@@ -1,3 +1,4 @@
+// ================================ Payment =================================
 export enum PaymentMethod {
   CREDIT,
   PROMPTPAY,
@@ -25,3 +26,17 @@ export type Prescription = {
   status: string | null;
   prescription_item: PrescriptionItem[];
 };
+
+// ================================ Tracking =================================
+export enum TrackingStatus {
+  PREPARE = 'PREPARE',
+  SENDING = 'SENDING',
+  SUCCESS = 'SUCCESS',
+}
+
+export type Tracking = {
+  id: string;
+  payment_id: string;
+  status: TrackingStatus;
+  location: string;
+}

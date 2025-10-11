@@ -26,9 +26,10 @@ export async function CreatePayment(prescription_id: string, method: PaymentMeth
   }
 }
 
-export async function ConfirmPayment(payment_id: string) {
+export async function ConfirmPayment(payment_id: string, delivery: boolean) {
   try {
-    const { data } = await axios.patch(`http://localhost:4005/api/payments/pay/${payment_id}`);
+    const payload = {"delivery":delivery};
+    const { data } = await axios.patch(`http://localhost:4005/api/payments/pay/${payment_id}`, payload);
     return data;
   } catch (e) {
     throw new Error("Failed to create payment: " + e);
@@ -38,6 +39,15 @@ export async function ConfirmPayment(payment_id: string) {
 export async function CancelPayment(payment_id: string) {
   try {
     const { data } = await axios.delete(`http://localhost:4005/api/payments/${payment_id}`);
+    return data;
+  } catch (e) {
+    throw new Error("Failed to create payment: " + e);
+  }
+}
+
+export async function FetchTrackingInfo(tracking_id:string) {
+  try {
+    const { data } = await axios.get(`http://localhost:4005/api/tracking/${tracking_id}`);
     return data;
   } catch (e) {
     throw new Error("Failed to create payment: " + e);

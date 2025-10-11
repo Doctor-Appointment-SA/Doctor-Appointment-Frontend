@@ -1,17 +1,28 @@
 "use client";
 
 import { CancelPayment, ConfirmPayment } from "@/lib/payment";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import React from "react";
 
 const confirm = () => {
   const { payment_id } = useParams<{ payment_id: string }>();
+  const params = useSearchParams();
+  const delivery = params.get("delivery") === "true";
   const router = useRouter();
 
-  console.log("payemtn_id", payment_id);
+  // submit to confirm payment, to create tracking record if delivery is true
   const handleSubmit = async () => {
-    const data = await ConfirmPayment(payment_id);
+    const data = await ConfirmPayment(payment_id, delivery);
     console.log("data:", data);
+
+    // if do delivery, go to delivery page, if not go to home page
+    if (delivery) {
+      const tracking_id = data.tracking_data.id;
+      console.log("tracing_id", tracking_id);
+      router.push(`/payment/track/${tracking_id}`);
+    } else {
+      router.push('/authen');
+    }
   };
 
   const handleCancel = async () => {

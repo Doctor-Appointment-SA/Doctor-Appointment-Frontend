@@ -12,9 +12,8 @@ const payment = () => {
   const [delivery, setDelivery] = useState<boolean>();
   const [payment, setPayment] = useState<PaymentMethod>();
   const [prescription, setPrescription] = useState<Prescription>();
-  const { id } = useParams<{ id: string }>();
+  const { prescription_id } = useParams<{ prescription_id: string }>();
 
-  console.log("id", id);
   // cal total cost
   const total = useMemo(() => {
     return (
@@ -38,19 +37,18 @@ const payment = () => {
   const handleSubmit = async (
     prescription_id: string,
     method: PaymentMethod,
-    delivery: boolean,
     cost: number
   ) => {
     // console.log("pahment", payment, typeof payment);
     const created = await CreatePayment(prescription_id, method, cost);
     console.log("created:", created);
     const payment_id = created.id;
-    router.push(`/payment/confirm/${payment_id}`);
+    router.push(`/payment/confirm/${payment_id}?delivery=${delivery}`);
   };
 
   useEffect(() => {
-    fetchPaymentItem(id);
-  }, [id]);
+    fetchPaymentItem(prescription_id);
+  }, [prescription_id]);
 
   return (
     <main className="mx-auto my-10 w-[390px] h-[844px] bg-amber-50">
@@ -142,7 +140,7 @@ const payment = () => {
               alert("กรุณาเลือกวิธีการชำระเงิน");
               return;
             }
-            handleSubmit(prescription.id, payment, delivery, total);
+            handleSubmit(prescription.id, payment, total);
           }}
           className="mt-4 w-full py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg shadow-md transition-all"
         >
