@@ -26,9 +26,9 @@ export async function CreatePayment(prescription_id: string, method: PaymentMeth
   }
 }
 
-export async function ConfirmPayment(payment_id: string, delivery: boolean) {
+export async function ConfirmPayment(payment_id: string, delivery: boolean, location: string) {
   try {
-    const payload = {"delivery":delivery};
+    const payload = {"delivery":delivery, "location":location};
     const { data } = await axios.patch(`http://localhost:4005/api/payments/pay/${payment_id}`, payload);
     return data;
   } catch (e) {
@@ -45,10 +45,24 @@ export async function CancelPayment(payment_id: string) {
   }
 }
 
-export async function FetchTrackingInfo(tracking_id:string) {
+export function FetchTrackingInfo(tracking_id:string, setTracking:(t: any)=>void) {
   try {
-    const { data } = await axios.get(`http://localhost:4005/api/tracking/${tracking_id}`);
-    return data;
+    const eventSource = new EventSource(`http://localhost:4005/api/tracking/stream/${tracking_id}`)
+
+    eventSource.onmessage = (e) => {
+      const msg = JSON.parse(e.data);
+      if (msg.type === "ping") console.log("ping from backend");
+      if (msg.type === 'init' || msg.type === 'update') setTracking(msg.payload);
+    };
+
+    eventSource.onerror = () => {
+      // browser auto-reconnects; no work needed
+    };
+    
+    return () => {
+      eventSource.close(); // <-- CLOSE CONNECTION HERE
+      console.log("SSE closed");
+    };
   } catch (e) {
     throw new Error("Failed to create payment: " + e);
   }

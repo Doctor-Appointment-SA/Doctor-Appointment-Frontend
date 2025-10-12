@@ -8,11 +8,15 @@ const confirm = () => {
   const { payment_id } = useParams<{ payment_id: string }>();
   const params = useSearchParams();
   const delivery = params.get("delivery") === "true";
+  const location = params.get("location");
   const router = useRouter();
+
+  console.log("location", location);
 
   // submit to confirm payment, to create tracking record if delivery is true
   const handleSubmit = async () => {
-    const data = await ConfirmPayment(payment_id, delivery);
+    if (!location) return;
+    const data = await ConfirmPayment(payment_id, delivery, location);
     console.log("data:", data);
 
     // if do delivery, go to delivery page, if not go to home page

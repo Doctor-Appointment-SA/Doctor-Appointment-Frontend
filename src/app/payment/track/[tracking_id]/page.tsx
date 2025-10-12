@@ -15,25 +15,21 @@ export default function TrackingPage() {
 
   // current progress show by UI
   const currentStep = (() => {
-    if (!tracking) return;
+    if (!tracking) return 0;
     if (tracking.status === TrackingStatus.PREPARE) return 0;
     if (tracking.status === TrackingStatus.SENDING) return 1;
     if (tracking.status === TrackingStatus.SUCCESS) return 2;
     return 0;
   })();
 
-  const fetchTrackingInfo = async () => {
-    const data = await FetchTrackingInfo(tracking_id);
-    console.log("data:", data);
-    setTracking(data);
-  }
+  // const fetchTrackingInfo = async () => {
+  //   await FetchTrackingInfo(tracking_id, setTracking);
+  // }
 
   useEffect(()=>{
-    fetchTrackingInfo();
-  }, [])
-
-  console.log('currentstep', currentStep);
-  console.log("traccking status:", tracking && tracking.status, typeof tracking, typeof TrackingStatus.SUCCESS);
+    const cleanup = FetchTrackingInfo(tracking_id, setTracking);
+    return cleanup;
+  }, [tracking_id])
 
   return (
     <main className="mx-auto my-10 w-[390px] h-[844px] bg-amber-50 p-4">

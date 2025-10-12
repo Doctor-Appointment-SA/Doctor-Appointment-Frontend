@@ -9,9 +9,10 @@ import { useEffect, useMemo, useState } from "react";
 const payment = () => {
   const router = useRouter();
 
-  const [delivery, setDelivery] = useState<boolean>();
+  const [delivery, setDelivery] = useState<boolean>(false);
   const [payment, setPayment] = useState<PaymentMethod>();
   const [prescription, setPrescription] = useState<Prescription>();
+  const [address, setAddress] = useState<string>("my home");
   const { prescription_id } = useParams<{ prescription_id: string }>();
 
   // cal total cost
@@ -43,12 +44,13 @@ const payment = () => {
     const created = await CreatePayment(prescription_id, method, cost);
     console.log("created:", created);
     const payment_id = created.id;
-    router.push(`/payment/confirm/${payment_id}?delivery=${delivery}`);
+    router.push(`/payment/confirm/${payment_id}?delivery=${delivery}&location=${address}`);
   };
 
   useEffect(() => {
     fetchPaymentItem(prescription_id);
   }, [prescription_id]);
+
 
   return (
     <main className="mx-auto my-10 w-[390px] h-[844px] bg-amber-50">
@@ -104,7 +106,7 @@ const payment = () => {
         >
           <div className="text-lg font-semibold">เลือกรูปแบบการรับ</div>
           <label>
-            <input type="radio" name="delivery" value={"false"} />{" "}
+            <input type="radio" name="delivery" value={"false"} defaultChecked />{" "}
             รับที่โรงพยาบาล
           </label>
           <label>
@@ -112,6 +114,20 @@ const payment = () => {
           </label>
         </div>
 
+        {/* address field */}
+        {delivery === true && (
+          <div className="flex flex-col space-y-2">
+            <div className="text-lg font-semibold">ที่อยู่จัดส่ง</div>
+            <textarea
+              className="w-full border rounded-md p-2"
+              placeholder="กรอกที่อยู่จัดส่งทั้งหมดในบรรทัดเดียว เช่น 123/45 ถนนสุขุมวิท กรุงเทพฯ 10260"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              rows={3}
+            />
+          </div>
+        )}
+        
         {/* payment checkbox */}
         <div
           onChange={(e: any) => setPayment(e.target.value)}
@@ -138,6 +154,10 @@ const payment = () => {
           onClick={() => {
             if (!prescription?.id || !payment) {
               alert("กรุณาเลือกวิธีการชำระเงิน");
+              return;
+            }
+            if (delivery && !address) {
+              alert("กรุณาเลือกสถานที่รับของ");
               return;
             }
             handleSubmit(prescription.id, payment, total);
