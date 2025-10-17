@@ -31,8 +31,16 @@ export async function ConfirmPayment(payment_id: string, delivery: boolean, loca
     const payload = {"delivery":delivery, "location":location};
     const { data } = await axios.patch(`http://localhost:4005/api/payments/pay/${payment_id}`, payload);
     return data;
-  } catch (e) {
-    throw new Error("Failed to create payment: " + e);
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      const body = err.response?.data as any;      // { statusCode, message, error, ... }
+      const status = body?.status;                 // 400, 404
+      const msg = body?.message;                   // 
+
+      return {"status":status, "msg":msg};
+    }
+    // Non-Axios error (network, CORS, etc.)
+    throw new Error("Network or unexpected error");
   }
 }
 
@@ -62,6 +70,30 @@ export function FetchTrackingInfo(tracking_id:string, setTracking:(t: any)=>void
     return () => {
       eventSource.close(); // <-- CLOSE CONNECTION HERE
       console.log("SSE closed");
+    };
+  } catch (e) {
+    throw new Error("Failed to create payment: " + e);
+  }
+}
+
+export function IsPaymentExpired(payment_id:string, setPaymentExpired:(t: any)=>void, setTimer:(t: any)=>void, setPrescription_id:(t:any)=>void) {
+  try {
+    const eventSource = new EventSource(`http://localhost:4005/api/payments/stream/${payment_id}`)
+
+    eventSource.onmessage = (e) => {
+      // console.log("message", e);
+      const msg = JSON.parse(e.data);
+      if (msg.type === "remove") {setPaymentExpired(true); setPrescription_id(msg.payload.prescription_id)}
+      if (msg.type === "ping-ttl") {setTimer(msg.payload);}
+    };
+
+    eventSource.onerror = () => {
+      // browser auto-reconnects; no work needed
+    };
+    
+    return () => {
+      eventSource.close(); // <-- CLOSE CONNECTION HERE
+      console.log("SSE for IsPaymentExpired was closed");
     };
   } catch (e) {
     throw new Error("Failed to create payment: " + e);
