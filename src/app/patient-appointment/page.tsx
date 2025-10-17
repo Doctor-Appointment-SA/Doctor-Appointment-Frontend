@@ -33,7 +33,7 @@ const PatientAppointmentPage = () => {
     try {
       const token = localStorage.getItem("access_token");
       const res = await axios.post(
-        "http://localhost:8080/api/appointment",
+        "http://localhost:9000/api/appointment",
         {
           // patient_id,
           doctor_id: selectedDoctor?.id,
