@@ -33,6 +33,18 @@ const DoctorMakeAppointment = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] =
     useState<AppointmentDetail | null>(null);
+  const [newDetail, setNewDetail] = useState("");
+
+  const handleSave = () => {
+    if (selectedAppointment) {
+      setSelectedAppointment({
+        ...selectedAppointment,
+        detail: newDetail,
+      })
+    }
+    setIsDialogOpen(false)
+  }
+
 
   return (
     <div className="min-h-screen from-gray-100 via-white to-pink-100 p-8">
@@ -71,6 +83,7 @@ const DoctorMakeAppointment = () => {
                         detail:
                           "รายละเอียด: gggggggggggggggggggggggggg gggggggggggggggggggggggggg gggggggggggggggggggggggggg",
                       });
+                      setNewDetail(selectedAppointment?.detail ?? "");
                       setIsDialogOpen(true);
                     }}
                   >
@@ -116,15 +129,12 @@ const DoctorMakeAppointment = () => {
                 {selectedAppointment?.appointment}
               </h3>
               <div className="space-y-3">
-                {editableDetails.map((detail, index) => (
-                  <Textarea
-                    key={index}
-                    value={detail}
-                    onChange={(e) => handleDetailChange(index, e.target.value)}
-                    className="min-h-20 text-sm leading-relaxed"
-                    placeholder="กรอกรายละเอียด..."
-                  />
-                ))}
+                <textarea
+                  value={newDetail}
+                  onChange={(e) => setNewDetail(e.target.value)}
+                  className="min-h-20 text-sm leading-relaxed w-full"
+                  placeholder="กรอกรายละเอียด..."
+                />
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <Button
