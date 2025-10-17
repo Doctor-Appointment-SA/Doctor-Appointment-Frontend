@@ -12,6 +12,7 @@ import {
   doctorCreateAppointment,
   getDoctorAppointments,
   getPatientData,
+  updateAppointmentDetail,
 } from "@/lib/appointment";
 import { AppointmentProps } from "@/props/AppointmentProps";
 import { UserProps } from "@/props/UserProps";
@@ -24,9 +25,11 @@ interface AppointmentDetail {
   timeRange: string;
   appointment: string | null;
   detail: string;
+  mode: "create" | "update";
+  appointmentId?: string;
 }
 
-const patient_id = "600815d5-0cf5-4696-8137-1a3283d1c002";
+const patient_id = "d51e5c0a-88ee-478d-b8d2-95010bb650c2";
 
 const toLocalYMD = (d: Date) => {
   const y = d.getFullYear();
@@ -47,7 +50,7 @@ const toTime = (v: string | Date) => {
   return time;
 };
 
-const TimeList = ["9:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00"];
+const TimeList = ["9:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
 
 const DoctorMakeAppointment = () => {
   const [myAppointment, setMyAppointment] = useState<AppointmentProps[]>();
@@ -96,18 +99,17 @@ const DoctorMakeAppointment = () => {
 
   // save info when close pop-up
   const handleSave = () => {
-    if (selectedAppointment) {
-      setSelectedAppointment({
-        ...selectedAppointment,
-        detail: newDetail,
-      });
+    if (selectedAppointment?.mode === "create") {
+      doctorCreateAppointment(
+        patient_id,
+        appointmentDate,
+        newDetail ?? "",
+        selectedAppointment?.time ?? ""
+      );
     }
-    doctorCreateAppointment(
-      patient_id,
-      appointmentDate,
-      newDetail ?? "",
-      selectedAppointment?.time ?? ""
-    );
+    else if (selectedAppointment?.mode === "update") {
+      updateAppointmentDetail(selectedAppointment?.appointmentId ?? "", newDetail);
+    }
     setIsDialogOpen(false);
   };
 
@@ -159,6 +161,7 @@ const DoctorMakeAppointment = () => {
                       const thisAppointment = nowAppointment(time);
                       console.log("this", thisAppointment);
                       const detail = thisAppointment?.detail ?? "";
+                      const mode = thisAppointment ? "update" : "create";
                       setSelectedAppointment({
                         time: startHour,
                         timeRange: `${startHour
@@ -168,6 +171,8 @@ const DoctorMakeAppointment = () => {
                           .padStart(2, "0")}.00`,
                         appointment: getFullName(time),
                         detail,
+                        mode,
+                        appointmentId: thisAppointment?.id
                       });
                       setNewDetail(detail);
                       setIsDialogOpen(true);

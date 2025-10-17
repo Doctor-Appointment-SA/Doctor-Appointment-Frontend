@@ -72,3 +72,14 @@ export const doctorCreateAppointment = async (
     console.log("Error on creating appointment(doctor):", error);
   }
 };
+
+export const updateAppointmentDetail = async (appointment_id: string, detail: string) => {
+  try {
+    const res = await api.patch(`/appointment/${appointment_id}`, {
+      detail,
+    });
+    console.log("Update Response:", res.data);
+  } catch (error) {
+    console.log("Error on updating appointment detail:", error);
+  }
+}
