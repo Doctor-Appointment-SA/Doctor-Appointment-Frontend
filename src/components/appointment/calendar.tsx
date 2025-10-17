@@ -122,7 +122,7 @@ export default function Calendar({
                     (currentDate.getMonth() + 1).toString().padStart(2, "0") +
                     "-" +
                     day.toString().padStart(2, "0");
-                  console.log(today);
+                  // console.log(today);
                   setAppointmentDate(today);
                 }}
                 className={`w-full h-full flex items-center justify-center text-sm font-medium rounded-md transition-colors hover:bg-muted ${

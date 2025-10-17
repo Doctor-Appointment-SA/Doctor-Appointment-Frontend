@@ -1,6 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,43 +8,125 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import dynamic from "next/dynamic";
+import {
+  doctorCreateAppointment,
+  getDoctorAppointments,
+  getPatientData,
+} from "@/lib/appointment";
+import { AppointmentProps } from "@/props/AppointmentProps";
+import { UserProps } from "@/props/UserProps";
 const Calendar = dynamic(() => import("@/components/appointment/calendar"), {
   ssr: false,
 });
 
 interface AppointmentDetail {
+  time: string;
   timeRange: string;
   appointment: string | null;
   detail: string;
 }
 
-const timeSlots = [
-  { time: "01.00 น.", appointment: "นัดคนไข้ A" },
-  { time: "02.00 น.", appointment: null },
-  { time: "03.00 น.", appointment: "นัดคนไข้ B" },
-  { time: "04.00 น.", appointment: null },
-  { time: "05.00 น.", appointment: null },
-  { time: "06.00 น.", appointment: null },
-  { time: "07.00 น.", appointment: null },
-];
+const patient_id = "600815d5-0cf5-4696-8137-1a3283d1c002";
+
+const toLocalYMD = (d: Date) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`; // "YYYY-MM-DD"
+};
+
+const toDateKey = (v: string | Date) => {
+  const d = v instanceof Date ? v : new Date(v);
+  return toLocalYMD(d);
+};
+
+const toTime = (v: string | Date) => {
+  const d = v instanceof Date ? v : new Date(v);
+  const time = d.getHours();
+  // console.log(time);
+  return time;
+};
+
+const TimeList = ["9:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00"];
 
 const DoctorMakeAppointment = () => {
+  const [myAppointment, setMyAppointment] = useState<AppointmentProps[]>();
   const [appointmentDate, setAppointmentDate] = useState("");
+  const [todayAppointment, setTodayAppointment] =
+    useState<AppointmentProps[]>();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] =
     useState<AppointmentDetail | null>(null);
   const [newDetail, setNewDetail] = useState("");
+  const [patientData, setPatientData] = useState<UserProps>();
 
+  // fetch start data
+  useEffect(() => {
+    const fetchData = async () => {
+      const appointmentData = await getDoctorAppointments("CONFIRMED");
+      const tmpPatientData = await getPatientData(patient_id);
+      console.log(tmpPatientData);
+      if (appointmentData) {
+        setMyAppointment(appointmentData);
+      }
+      if (tmpPatientData) {
+        setPatientData(tmpPatientData);
+      }
+    };
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    if (!appointmentDate || !myAppointment) {
+      setTodayAppointment([]);
+      return;
+    }
+    setTodayAppointment(
+      myAppointment.filter((a) => {
+        return toDateKey(a.appoint_date) === appointmentDate;
+      })
+    );
+
+    console.log(
+      myAppointment.filter((a) => {
+        return toDateKey(a.appoint_date) === appointmentDate;
+      })
+    );
+  }, [appointmentDate]);
+
+  // save info when close pop-up
   const handleSave = () => {
     if (selectedAppointment) {
       setSelectedAppointment({
         ...selectedAppointment,
         detail: newDetail,
-      })
+      });
     }
-    setIsDialogOpen(false)
-  }
+    doctorCreateAppointment(
+      patient_id,
+      appointmentDate,
+      newDetail ?? "",
+      selectedAppointment?.time ?? ""
+    );
+    setIsDialogOpen(false);
+  };
 
+  const nowAppointment = (time: string) => {
+    const tdappoint = todayAppointment?.filter(
+      (a) => toTime(a.appoint_date).toString() === time.split(":")[0]
+    )[0];
+    return tdappoint;
+  };
+
+  const getFullName = (time: string) => {
+    const appt = nowAppointment(time);
+    const fullName =
+      (appt?.patient.user_patient_idTouser.name ?? "") +
+      " " +
+      (appt?.patient.user_patient_idTouser.lastname ?? "");
+    if (appt) return `นัดคนไข้ ${fullName}`;
+    return `นัดคนไข้ ${patientData?.name + " " + patientData?.lastname}`;
+  };
 
   return (
     <div className="min-h-screen from-gray-100 via-white to-pink-100 p-8">
@@ -66,33 +148,37 @@ const DoctorMakeAppointment = () => {
             <div className="rounded-lg bg-white p-6 shadow-sm border">
               <h3 className="mb-6 text-lg font-semibold">Schedule</h3>
               <div className="space-y-3">
-                {timeSlots.map((slot, index) => (
+                {TimeList.map((time, index) => (
                   <div
                     key={index}
                     className="flex flex-col gap-2"
                     onClick={() => {
-                      const startHour = index + 1;
-                      const endHour = startHour + 1;
+                      const startHour = time.split(":")[0];
+                      const endHour = (Number(startHour) + 1).toString();
+                      if (!todayAppointment) return;
+                      const thisAppointment = nowAppointment(time);
+                      console.log("this", thisAppointment);
+                      const detail = thisAppointment?.detail ?? "";
                       setSelectedAppointment({
+                        time: startHour,
                         timeRange: `${startHour
                           .toString()
                           .padStart(2, "0")}.00 - ${endHour
                           .toString()
                           .padStart(2, "0")}.00`,
-                        appointment: slot.appointment,
-                        detail:
-                          "รายละเอียด: gggggggggggggggggggggggggg gggggggggggggggggggggggggg gggggggggggggggggggggggggg",
+                        appointment: getFullName(time),
+                        detail,
                       });
-                      setNewDetail(selectedAppointment?.detail ?? "");
+                      setNewDetail(detail);
                       setIsDialogOpen(true);
                     }}
                   >
                     <div className="text-sm font-medium text-gray-700">
-                      {slot.time}
+                      {time}
                     </div>
-                    {slot.appointment ? (
+                    {nowAppointment(time)?.appoint_date ? (
                       <div className="rounded-lg bg-green-200 p-4 text-center font-medium min-h-[60px] flex items-center justify-center">
-                        {slot.appointment}
+                        {getFullName(time)}
                       </div>
                     ) : (
                       <div className="rounded-lg bg-gray-100 p-4 min-h-[60px] flex items-center justify-center" />
@@ -118,7 +204,10 @@ const DoctorMakeAppointment = () => {
         </div>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-md">
+          <DialogContent
+            className="max-w-md"
+            onOpenAutoFocus={(e) => e.preventDefault()}
+          >
             <DialogHeader>
               <DialogTitle className="text-lg font-semibold">
                 เวลา {selectedAppointment?.timeRange}

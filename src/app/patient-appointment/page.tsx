@@ -8,13 +8,12 @@ import { DoctorProps } from "@/props/doctorInfo";
 import axios from "axios";
 import React, { useState } from "react";
 import dynamic from "next/dynamic";
+import { patientCreateAppointment } from "@/lib/appointment";
 const Calendar = dynamic(() => import("@/components/appointment/calendar"), {
   ssr: false,
 });
 
 const TimeList = ["9:00", "10:00", "11:00", "12:00", "13:00", "14:00"];
-
-let patient_id = "";
 
 const PatientAppointmentPage = () => {
   const [selectedDoctor, setSelectedDoctor] = useState<DoctorProps | null>(
@@ -28,29 +27,6 @@ const PatientAppointmentPage = () => {
   // useEffect(() => {
   //   console.log(selectedDoctor);
   // }, [selectedDoctor]);
-
-  const handleSubmit = async () => {
-    try {
-      const token = localStorage.getItem("access_token");
-      const res = await axios.post(
-        "http://localhost:9000/api/appointment",
-        {
-          // patient_id,
-          doctor_id: selectedDoctor?.id,
-          appoint_date: appointmentDate + "T" + selectedTime + ":00.000Z",
-          status: "Pending",
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      console.log("Response:", res.data);
-    } catch (error) {
-      console.log("Error on creating appointment:", error);
-    }
-  };
 
   return (
     <div className="flex flex-col items-center mt-4">
@@ -114,7 +90,7 @@ const PatientAppointmentPage = () => {
           text="ยืนยัน"
           textColor="#F5F5F5"
           bgColor="#2C2C2C"
-          onClick={handleSubmit}
+          onClick={() => patientCreateAppointment(selectedDoctor, appointmentDate, selectedTime)}
         />
       </div>
 
