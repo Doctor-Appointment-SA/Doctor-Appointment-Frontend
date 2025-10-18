@@ -1,5 +1,5 @@
 import { api } from "@/lib/api";
-import { PaymentMethod } from "@/type/payment";
+import { PaymentMethod } from "@/type/paymentType";
 import axios from "axios";
 
 export async function PrescriptionItem(prescription_id: string) {
