@@ -92,9 +92,10 @@ export function getTodayThai() {
   const now = new Date();
 
   // แปลงจากเวลาปัจจุบันเป็นเวลาไทย (+7 ชั่วโมง)
-  const utc = now.getTime() + now.getTimezoneOffset() * 60000; // แปลงเป็น UTC (ms)
-  const thaiTime = new Date(utc + 7 * 60 * 60 * 1000); // เพิ่ม 7 ชม. → เวลาไทย
+  const utc = now.getTime() - now.getTimezoneOffset() * 60000; // แปลงเป็น UTC (ms)
+  const thaiTime = new Date(utc);
   // คืนค่าในรูปแบบ YYYY-MM-DD
+  // console.log(thaiTime.toISOString())
   return thaiTime.toISOString().split("T")[0];
 }
 
@@ -104,6 +105,29 @@ export const toTime = (v: string | Date) => {
   const time = d.getHours();
   // console.log(time);
   return time;
+};
+
+export const isPast = (time: string, date: string) => {
+  const now = new Date();
+
+  // แปลง date string เป็น Date object (YYYY-MM-DD)
+  const [y, m, d] = date.split("-").map(Number);
+  const targetDate = new Date(y, m - 1, d);
+
+  // ถ้าวันที่ไม่ตรงกับวันนี้ → ยังไม่ผ่าน
+  if (
+    targetDate.getFullYear() !== now.getFullYear() ||
+    targetDate.getMonth() !== now.getMonth() ||
+    targetDate.getDate() !== now.getDate()
+  ) {
+    return false;
+  }
+
+  // เช็คเวลาในวันเดียวกัน
+  const appointHour = Number(time.split(":")[0]);
+  const currentHour = now.getHours();
+
+  return appointHour < currentHour;
 };
 
 // ดึงตารางนัดหมายของแพทย์ในวันที่ระบุ
