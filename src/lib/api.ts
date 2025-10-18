@@ -18,17 +18,6 @@ export const apiClient: AxiosInstance = axios.create({
   // withCredentials: true, // uncomment if your backend uses cookies
 });
 
-// (optional) attach Bearer token automatically
-apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("access_token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-  }
-  return config;
-});
-
 // unified error (similar to your fetch version’s thrown text)
 export class ApiError extends Error {
   status?: number;

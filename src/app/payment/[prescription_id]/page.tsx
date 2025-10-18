@@ -1,7 +1,7 @@
 "use client";
 
 import { CreatePayment, PrescriptionItem } from "@/lib/payment";
-import { PaymentMethod, Prescription } from "@/type/payment";
+import { PaymentMethod, Prescription } from "@/type/paymentType";
 import { useParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";

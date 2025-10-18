@@ -1,7 +1,7 @@
 "use client";
 
 import { FetchTrackingInfo } from "@/lib/payment";
-import { Tracking, TrackingStatus } from "@/type/payment";
+import { Tracking, TrackingStatus } from "@/type/paymentType";
 import { useParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
