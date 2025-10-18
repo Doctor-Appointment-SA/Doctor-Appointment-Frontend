@@ -1,28 +1,65 @@
-import React, { Dispatch, SetStateAction, useState } from "react";
+import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
 import DoctorListItem from "./doctorListItem";
 import { DoctorProps } from "@/props/doctorInfo";
 import NavButton from "./navButton";
+import { getDoctorScheduleOnDate, toTime } from "@/lib/appointment";
+import { AppointmentProps } from "@/props/AppointmentProps";
 
 interface Props {
   isTimeModalOpen: boolean;
   setIsTimeModalOpen: Dispatch<SetStateAction<boolean>>;
   selectedDoctor: DoctorProps | null;
   setSelectedTime: Dispatch<SetStateAction<string>>;
-  selectedTime: string;
+  appointmentDate: string;
   setIsDoctorListOpen: Dispatch<SetStateAction<boolean>>;
+  doctorSchedule: string[];
+  setDoctorSchedule: Dispatch<SetStateAction<string[]>>;
 }
 
-const TimeList = ["9:00", "10:00", "11:00", "12:00", "13:00", "14:00"];
+const TimeList = [
+  "9:00",
+  "10:00",
+  "11:00",
+  "12:00",
+  "13:00",
+  "14:00",
+  "15:00",
+  "16:00",
+];
 
 const AppointmentTime = ({
   isTimeModalOpen,
   setIsTimeModalOpen,
   selectedDoctor,
   setSelectedTime,
-  selectedTime,
+  appointmentDate,
   setIsDoctorListOpen,
+  doctorSchedule,
+  setDoctorSchedule,
 }: Props) => {
   const [tempTime, setTempTime] = useState("");
+
+  useEffect(() => {
+    const fetchdata = async () => {
+      if (selectedDoctor?.id) {
+        const doctorScheduleTmp = await getDoctorScheduleOnDate(
+          selectedDoctor?.id,
+          appointmentDate
+        );
+        setDoctorSchedule(
+          doctorScheduleTmp.map(
+            (s: AppointmentProps) => toTime(s.appoint_date) + ":00"
+          )
+        );
+        // console.log(
+        //   doctorScheduleTmp.map(
+        //     (s: AppointmentProps) => toTime(s.appoint_date) + ":00"
+        //   )
+        // );
+      }
+    };
+    fetchdata();
+  }, [selectedDoctor, appointmentDate]);
 
   return (
     <div className="w-full">
@@ -56,12 +93,16 @@ const AppointmentTime = ({
                 <button
                   key={time}
                   className={`py-2 px-3 rounded-[10px] ${
-                    tempTime === time
+                    doctorSchedule?.includes(time)
+                      ? "text-[#757575] bg-[#BCB2B2]"
+                      : tempTime === time
                       ? "text-[#F5F5F5] bg-[#14AE5C]"
                       : "text-[#757575] bg-[#F5F5F5]"
                   }`}
                   onClick={() => {
-                    setTempTime(time);
+                    if (!doctorSchedule?.includes(time)) {
+                      setTempTime(time);
+                    }
                   }}
                 >
                   {time}
@@ -86,9 +127,11 @@ const AppointmentTime = ({
                 textColor="#F5F5F5"
                 bgColor="#757575"
                 onClick={() => {
-                  setIsTimeModalOpen(false);
-                  setSelectedTime(tempTime);
-                  setTempTime("");
+                  if (tempTime) {
+                    setIsTimeModalOpen(false);
+                    setSelectedTime(tempTime);
+                    setTempTime("");
+                  }
                 }}
               />
             </div>
