@@ -1,40 +1,42 @@
 "use client";
 import { LoginForm } from "@/components/authen/LoginForm";
 import { RegisterForm } from "@/components/authen/RegisterForm";
-import React, { useState } from "react";
-import { Login, Register } from "@/lib/authentication";
-
-enum AuthTab {
-  LOGIN = "login",
-  REGISTER = "register",
-}
-
-type LoginPayload = {
-  username: string;
-  password: string;
-};
-
-type RegisterPayload = {
-  id_card: string;
-  name: string;
-  lastname: string;
-  phone: string;
-  password: string;
-  confirmPassword: string;
-};
+import React, { useEffect, useState } from "react";
+import { getCookie, Login, refreshToken, Register, setCookie, whoami } from "@/lib/authentication";
+import { AuthTab, LoginPayload, RegisterPayload } from "@/type/authenticationType";
 
 const Authentication = () => {
   const [activeTab, setActiveTab] = useState<AuthTab>(AuthTab.LOGIN);
 
   const handleLoginSubmit = async (payload: LoginPayload) => {
     console.log(`${AuthTab.LOGIN} form submitted:`, payload);
-    await Login(payload);
+    const data = await Login(payload);
+
+    console.log("data acc", data.access_token)
+    setCookie("access_token", data.access_token);
   };
 
   const handleRegisterSubmit = async (payload: RegisterPayload) => {
     console.log(`${AuthTab.REGISTER} form submitted:`, payload);
-    await Register(payload);
+    const data = await Register(payload);
+
+    setCookie("access_token", data.access_token);
   };
+
+  // const whoamiTEMP = async () => {
+  //   const w = await whoami();
+  //   return w;
+  // }
+
+  // const refreshTEMP = async () => {
+  //   const re = await refreshToken();
+  //   return re;
+  // }
+
+  // useEffect(()=>{
+  //   whoamiTEMP();
+  //   // refreshTEMP();
+  // }, [])
 
   return (
     <main className="flex p-8 justify-center">
@@ -77,6 +79,7 @@ const Authentication = () => {
             )}
           </div>
         </div>
+
       </div>
     </main>
   );
