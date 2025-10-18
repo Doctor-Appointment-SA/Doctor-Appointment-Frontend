@@ -1,6 +1,6 @@
 "use client";
 
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -31,7 +31,7 @@ export default function Calendar({
   setAppointmentDate,
 }: Props) {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState(0);
+  const [selectedDate, setSelectedDate] = useState(Number(appointmentDate.split('-')[2]));
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -68,6 +68,10 @@ export default function Calendar({
     minute: "2-digit",
     hour12: false,
   });
+
+  // useEffect(() => {
+  //   console.log(selectedDate)
+  // }, [selectedDate]);
 
   return (
     <div className="bg-white rounded-lg p-6 shadow-sm border">

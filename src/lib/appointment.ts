@@ -1,5 +1,6 @@
 import { DoctorProps } from "@/props/doctorInfo";
 import axios from "axios";
+import { start } from "repl";
 const api = axios.create({ baseURL: "http://localhost:9000/api" });
 
 api.interceptors.request.use((config) => {
@@ -73,7 +74,10 @@ export const doctorCreateAppointment = async (
   }
 };
 
-export const updateAppointmentDetail = async (appointment_id: string, detail: string) => {
+export const updateAppointmentDetail = async (
+  appointment_id: string,
+  detail: string
+) => {
   try {
     const res = await api.patch(`/appointment/${appointment_id}`, {
       detail,
@@ -82,4 +86,37 @@ export const updateAppointmentDetail = async (appointment_id: string, detail: st
   } catch (error) {
     console.log("Error on updating appointment detail:", error);
   }
+};
+
+export function getTodayThai() {
+  const now = new Date();
+
+  // แปลงจากเวลาปัจจุบันเป็นเวลาไทย (+7 ชั่วโมง)
+  const utc = now.getTime() + now.getTimezoneOffset() * 60000; // แปลงเป็น UTC (ms)
+  const thaiTime = new Date(utc + 7 * 60 * 60 * 1000); // เพิ่ม 7 ชม. → เวลาไทย
+  // คืนค่าในรูปแบบ YYYY-MM-DD
+  return thaiTime.toISOString().split("T")[0];
 }
+
+export const toTime = (v: string | Date) => {
+  const d = v instanceof Date ? v : new Date(v);
+  // console.log(d);
+  const time = d.getHours();
+  // console.log(time);
+  return time;
+};
+
+// ดึงตารางนัดหมายของแพทย์ในวันที่ระบุ
+export const getDoctorScheduleOnDate = async (
+  doctor_id: string,
+  date: string
+) => {
+  try {
+    const res = await api.get(
+      `appointment/doctor/${doctor_id}?status=CONFIRMED&date=${date}`
+    );
+    return res.data;
+  } catch (error) {
+    console.log("Error on fetching doctor's schedule:", error);
+  }
+};

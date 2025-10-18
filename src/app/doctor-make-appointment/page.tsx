@@ -12,6 +12,8 @@ import {
   doctorCreateAppointment,
   getDoctorAppointments,
   getPatientData,
+  getTodayThai,
+  toTime,
   updateAppointmentDetail,
 } from "@/lib/appointment";
 import { AppointmentProps } from "@/props/AppointmentProps";
@@ -43,18 +45,20 @@ const toDateKey = (v: string | Date) => {
   return toLocalYMD(d);
 };
 
-const toTime = (v: string | Date) => {
-  const d = v instanceof Date ? v : new Date(v);
-  const time = d.getHours();
-  // console.log(time);
-  return time;
-};
-
-const TimeList = ["9:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
+const TimeList = [
+  "9:00",
+  "10:00",
+  "11:00",
+  "12:00",
+  "13:00",
+  "14:00",
+  "15:00",
+  "16:00",
+];
 
 const DoctorMakeAppointment = () => {
   const [myAppointment, setMyAppointment] = useState<AppointmentProps[]>();
-  const [appointmentDate, setAppointmentDate] = useState("");
+  const [appointmentDate, setAppointmentDate] = useState(getTodayThai());
   const [todayAppointment, setTodayAppointment] =
     useState<AppointmentProps[]>();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -106,9 +110,11 @@ const DoctorMakeAppointment = () => {
         newDetail ?? "",
         selectedAppointment?.time ?? ""
       );
-    }
-    else if (selectedAppointment?.mode === "update") {
-      updateAppointmentDetail(selectedAppointment?.appointmentId ?? "", newDetail);
+    } else if (selectedAppointment?.mode === "update") {
+      updateAppointmentDetail(
+        selectedAppointment?.appointmentId ?? "",
+        newDetail
+      );
     }
     setIsDialogOpen(false);
   };
@@ -172,7 +178,7 @@ const DoctorMakeAppointment = () => {
                         appointment: getFullName(time),
                         detail,
                         mode,
-                        appointmentId: thisAppointment?.id
+                        appointmentId: thisAppointment?.id,
                       });
                       setNewDetail(detail);
                       setIsDialogOpen(true);
