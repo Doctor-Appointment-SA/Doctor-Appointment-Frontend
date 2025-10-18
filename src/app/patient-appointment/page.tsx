@@ -7,7 +7,7 @@ import NavButton from "@/components/appointment/navButton";
 import { DoctorProps } from "@/props/doctorInfo";
 import React, { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import { getTodayThai, patientCreateAppointment } from "@/lib/appointment";
+import { getTodayThai, patientCreateAppointment, isPast } from "@/lib/appointment";
 import {
   Dialog,
   DialogContent,
@@ -16,12 +16,12 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { setDefaultResultOrder } from "dns";
 const Calendar = dynamic(() => import("@/components/appointment/calendar"), {
   ssr: false,
 });
 
 const TimeList = [
+  "2:00",
   "9:00",
   "10:00",
   "11:00",
@@ -92,14 +92,14 @@ const PatientAppointmentPage = () => {
                 <button
                   key={time}
                   className={`py-2 px-3 rounded-[10px] ${
-                    doctorSchedule?.includes(time)
+                    doctorSchedule?.includes(time) || isPast(time, appointmentDate)
                       ? "text-[#757575] bg-[#BCB2B2]"
                       : selectedTime === time
                       ? "text-[#F5F5F5] bg-[#14AE5C]"
                       : "text-[#757575] bg-[#F5F5F5]"
                   }`}
                   onClick={() => {
-                    if (!doctorSchedule?.includes(time)) {
+                    if (!doctorSchedule?.includes(time) && !isPast(time, appointmentDate)) {
                       setSelectedTime(time);
                     }
                   }}

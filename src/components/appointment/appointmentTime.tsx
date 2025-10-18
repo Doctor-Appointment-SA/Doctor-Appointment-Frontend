@@ -2,8 +2,9 @@ import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
 import DoctorListItem from "./doctorListItem";
 import { DoctorProps } from "@/props/doctorInfo";
 import NavButton from "./navButton";
-import { getDoctorScheduleOnDate, toTime } from "@/lib/appointment";
+import { getDoctorScheduleOnDate, toTime, isPast } from "@/lib/appointment";
 import { AppointmentProps } from "@/props/AppointmentProps";
+
 
 interface Props {
   isTimeModalOpen: boolean;
@@ -17,6 +18,7 @@ interface Props {
 }
 
 const TimeList = [
+  "2:00",
   "9:00",
   "10:00",
   "11:00",
@@ -93,14 +95,14 @@ const AppointmentTime = ({
                 <button
                   key={time}
                   className={`py-2 px-3 rounded-[10px] ${
-                    doctorSchedule?.includes(time)
+                    doctorSchedule?.includes(time) || isPast(time, appointmentDate)
                       ? "text-[#757575] bg-[#BCB2B2]"
                       : tempTime === time
                       ? "text-[#F5F5F5] bg-[#14AE5C]"
                       : "text-[#757575] bg-[#F5F5F5]"
                   }`}
                   onClick={() => {
-                    if (!doctorSchedule?.includes(time)) {
+                    if (!doctorSchedule?.includes(time) && !isPast(time, appointmentDate)) {
                       setTempTime(time);
                     }
                   }}

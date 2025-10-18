@@ -15,6 +15,7 @@ import {
   getTodayThai,
   toTime,
   updateAppointmentDetail,
+  isPast,
 } from "@/lib/appointment";
 import { AppointmentProps } from "@/props/AppointmentProps";
 import { UserProps } from "@/props/UserProps";
@@ -46,6 +47,7 @@ const toDateKey = (v: string | Date) => {
 };
 
 const TimeList = [
+  "2:00",
   "9:00",
   "10:00",
   "11:00",
@@ -72,7 +74,7 @@ const DoctorMakeAppointment = () => {
     const fetchData = async () => {
       const appointmentData = await getDoctorAppointments("CONFIRMED");
       const tmpPatientData = await getPatientData(patient_id);
-      console.log(tmpPatientData);
+      // console.log(tmpPatientData);
       if (appointmentData) {
         setMyAppointment(appointmentData);
       }
@@ -99,24 +101,39 @@ const DoctorMakeAppointment = () => {
         return toDateKey(a.appoint_date) === appointmentDate;
       })
     );
-  }, [appointmentDate]);
+  }, [appointmentDate, myAppointment]);
+
+  const refreshAppointments = async () => {
+    const data = await getDoctorAppointments("CONFIRMED");
+    setMyAppointment(data);
+  };
 
   // save info when close pop-up
-  const handleSave = () => {
-    if (selectedAppointment?.mode === "create") {
-      doctorCreateAppointment(
-        patient_id,
-        appointmentDate,
-        newDetail ?? "",
-        selectedAppointment?.time ?? ""
-      );
-    } else if (selectedAppointment?.mode === "update") {
-      updateAppointmentDetail(
-        selectedAppointment?.appointmentId ?? "",
-        newDetail
-      );
+  const handleSave = async () => {
+    if (!selectedAppointment) return;
+    try {
+      if (selectedAppointment.mode === "create") {
+        await doctorCreateAppointment(
+          patient_id,
+          appointmentDate,
+          newDetail ?? "",
+          selectedAppointment.time ?? ""
+        );
+      } else if (selectedAppointment.mode === "update") {
+        await updateAppointmentDetail(
+          selectedAppointment.appointmentId ?? "",
+          newDetail
+        );
+      }
+
+      await refreshAppointments();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsDialogOpen(false);
+      setSelectedAppointment(null);
+      setNewDetail("");
     }
-    setIsDialogOpen(false);
   };
 
   const nowAppointment = (time: string) => {
@@ -169,7 +186,7 @@ const DoctorMakeAppointment = () => {
                       const detail = thisAppointment?.detail ?? "";
                       const mode = thisAppointment ? "update" : "create";
                       setSelectedAppointment({
-                        time: startHour,
+                        time: `${startHour}:00`,
                         timeRange: `${startHour
                           .toString()
                           .padStart(2, "0")}.00 - ${endHour
@@ -233,23 +250,35 @@ const DoctorMakeAppointment = () => {
                   value={newDetail}
                   onChange={(e) => setNewDetail(e.target.value)}
                   className="min-h-20 text-sm leading-relaxed w-full"
-                  placeholder="กรอกรายละเอียด..."
+                  placeholder={
+                    !!selectedAppointment?.time &&
+                    isPast(selectedAppointment?.time, appointmentDate)
+                      ? "ไม่มีรายละเอียด"
+                      : "กรอกรายละเอียด..."
+                  }
+                  disabled={
+                    !!selectedAppointment?.time &&
+                    isPast(selectedAppointment?.time, appointmentDate)
+                  }
                 />
               </div>
-              <div className="flex justify-end gap-2 pt-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsDialogOpen(false)}
-                >
-                  ยกเลิก
-                </Button>
-                <Button
-                  onClick={handleSave}
-                  className="bg-black text-white hover:bg-gray-800"
-                >
-                  บันทึก
-                </Button>
-              </div>
+              {selectedAppointment?.time &&
+                !isPast(selectedAppointment?.time, appointmentDate) && (
+                  <div className="flex justify-end gap-2 pt-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsDialogOpen(false)}
+                    >
+                      ยกเลิก
+                    </Button>
+                    <Button
+                      onClick={handleSave}
+                      className="bg-black text-white hover:bg-gray-800"
+                    >
+                      บันทึก
+                    </Button>
+                  </div>
+                )}
             </div>
           </DialogContent>
         </Dialog>
