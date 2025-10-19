@@ -9,15 +9,15 @@ export default function DoctorLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user } = useAuth();
-  const router = useRouter();
+  // const { user } = useAuth();
+  // const router = useRouter();
 
-  // finish fetch, Authorize
-  useEffect(() => {
-    if (user && user.role !== "doctor") router.push("/403");
-  }, [user]);
+  // // finish fetch, Authorize
+  // useEffect(() => {
+  //   if (user && user.role !== "doctor") router.push("/403");
+  // }, [user]);
 
-  // user might still be fetching
-  if (user === null) return <p>Loading ...</p>;
+  // // user might still be fetching
+  // if (user === null) return <p>Loading ...</p>;
   return <>{children}</>;
 }
