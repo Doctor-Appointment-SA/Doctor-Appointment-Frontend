@@ -19,5 +19,5 @@ export default function DoctorLayout({
 
   // // user might still be fetching
   // if (user === null) return <p>Loading ...</p>;
-  return <>{children}</>;
+  return <>{children}</>;  
 }
