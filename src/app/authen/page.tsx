@@ -23,6 +23,10 @@ const Authentication = () => {
     setCookie("access_token", data.access_token);
   };
 
+  const trymerge = () =>{
+    
+  }
+
   // const whoamiTEMP = async () => {
   //   const w = await whoami();
   //   return w;
