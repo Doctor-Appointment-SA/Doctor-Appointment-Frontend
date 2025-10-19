@@ -2,12 +2,13 @@
 
 import { CreatePayment, PrescriptionItem } from "@/lib/payment";
 import { PaymentMethod, Prescription } from "@/type/paymentType";
-import { useParams } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 const payment = () => {
   const router = useRouter();
+  const pathname = usePathname();
 
   const [delivery, setDelivery] = useState<boolean>(false);
   const [payment, setPayment] = useState<PaymentMethod>();
@@ -44,7 +45,7 @@ const payment = () => {
     const created = await CreatePayment(prescription_id, method, cost);
     console.log("created:", created);
     const payment_id = created.id;
-    router.push(`/payment/confirm/${payment_id}?delivery=${delivery}&location=${address}`);
+    router.push(`/patient-home-page/payment/confirm/${payment_id}?delivery=${delivery}&location=${address}`);
   };
 
   useEffect(() => {
