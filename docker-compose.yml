@@ -4,7 +4,7 @@ services:
     build: .
     ports: ["3000:3000"]
     environment:
-      NEXT_PUBLIC_API_URL: "http://localhost:8080" 
+      NEXT_PUBLIC_API_URL: "http://localhost:9000" 
       CHOKIDAR_USEPOLLING: "true"
       WATCHPACK_POLLING: "true"
     command: npm run dev

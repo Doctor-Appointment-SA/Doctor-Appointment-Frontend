@@ -1,10 +1,14 @@
-import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "axios";
+import axios, {
+  AxiosError,
+  AxiosInstance,
+  InternalAxiosRequestConfig,
+} from "axios";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 // ---- baseURL (use your env; fallback for dev) ----
 const baseURL =
-  process.env.NEXT_PUBLIC_API_GATEWAY_URL || "http://localhost:4001/api";
+  process.env.NEXT_PUBLIC_API_GATEWAY_URL || "http://localhost:5001/api";
 if (!baseURL) throw new Error("Missing NEXT_PUBLIC_API_GATEWAY_URL");
 
 // ---- axios instance ----
@@ -29,7 +33,11 @@ export class ApiError extends Error {
 // ---- generic request used by helpers below ----
 async function request<T>(
   path: string,
-  opts: { method?: HttpMethod; body?: unknown; headers?: Record<string, string> } = {}
+  opts: {
+    method?: HttpMethod;
+    body?: unknown;
+    headers?: Record<string, string>;
+  } = {}
 ): Promise<T> {
   try {
     const res = await apiClient.request<T>({
@@ -46,7 +54,11 @@ async function request<T>(
     const statusText = err.response?.statusText ?? "";
     const data = err.response?.data;
     const text = typeof data === "string" ? data : JSON.stringify(data ?? "");
-    throw new ApiError(`API ${status ?? ""} ${statusText}: ${text}`, status, data);
+    throw new ApiError(
+      `API ${status ?? ""} ${statusText}: ${text}`,
+      status,
+      data
+    );
   }
 }
 
