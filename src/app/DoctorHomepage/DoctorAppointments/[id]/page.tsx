@@ -4,7 +4,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
-// ใช้ type กลาง ถ้ามีไฟล์ src/lib/types.ts อยู่แล้ว ให้ import จากที่นั่นแทน
 export type PatientDetails = {
   id: string;
   name: string;
@@ -23,6 +22,43 @@ export type PatientDetails = {
   notes?: string;
 };
 
+/** ---------- Types ที่ตรง backend (ยืดหยุ่นต่อ alias) ---------- */
+type AppointmentAPI = {
+  id: string;
+  appoint_date: string | null;
+  status?: string;
+  detail?: string | null;
+  patient?: {
+    id: string;
+    // ชื่อ relation ตาม schema ของคุณ
+    user_patient_idTouser?: {
+      name?: string | null;
+      lastname?: string | null;
+      id_card?: string | null;
+      phone?: string | null;
+    } | null;
+    symptom_note?: string | null; // ถ้าคืนใน appointment.include.patient
+  } | null;
+  doctor?: { id: string } | null;
+};
+
+type PatientAPI = {
+  id: string;
+  symptom_note?: string | null;
+  blood_drawn_at?: string | null;
+  hospital_number?: string | null;
+  // ด้านล่างอาจไม่มีใน schema จริง แต่เผื่อกรณีมี
+  weight?: number | null;
+  height?: number | null;
+  // ความสัมพันธ์ไป user
+  user_patient_idTouser?: {
+    name?: string | null;
+    lastname?: string | null;
+    id_card?: string | null;
+    phone?: string | null;
+  } | null;
+};
+
 export default function AppointmentDetailPage() {
   const params = useParams<{ id: string }>();
   const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
@@ -30,18 +66,86 @@ export default function AppointmentDetailPage() {
 
   const [data, setData] = useState<PatientDetails | null>(null);
   const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<string | null>(null);
 
-  // โหลดจาก mock API
   useEffect(() => {
     if (!id) return;
+
     (async () => {
+      setLoading(true);
+      setErr(null);
       try {
-        const res = await fetch(`/mock/patients/${id}`, { cache: "no-store" });
-        if (!res.ok) throw new Error("not-found");
-        const d: PatientDetails = await res.json();
-        setData(d);
-      } catch (e) {
+        const base = process.env.NEXT_PUBLIC_API_BASE;
+        if (!base) throw new Error("NEXT_PUBLIC_API_BASE is not set");
+
+        // 1) ดึงนัดตาม id
+        const res = await fetch(`${base}/appointments/${id}`, {
+          cache: "no-store",
+          credentials: "include",
+        });
+        if (!res.ok) throw new Error(`ไม่สามารถโหลดนัดได้ (${res.status})`);
+        const appt: AppointmentAPI = await res.json();
+
+        // แยกข้อมูลเบื้องต้น
+        const u = appt.patient?.user_patient_idTouser;
+        const patientName =
+          [u?.name, u?.lastname].filter(Boolean).join(" ").trim() || "ไม่ทราบชื่อ";
+        const d = appt.appoint_date ? new Date(appt.appoint_date) : null;
+        const date = d
+          ? d.toLocaleDateString("th-TH", { year: "numeric", month: "short", day: "2-digit" })
+          : "-";
+        const time = d ? d.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) : "-";
+
+        // 2) พยายามดึงรายละเอียดผู้ป่วยเพิ่ม (ถ้ามี endpoint)
+        let patientExtra: PatientAPI | null = null;
+        if (appt.patient?.id) {
+          try {
+            const pr = await fetch(`${base}/patients/${appt.patient.id}`, {
+              cache: "no-store",
+              credentials: "include",
+            });
+            if (pr.ok) patientExtra = await pr.json();
+          } catch {
+            /* เงียบ ๆ */
+          }
+        }
+
+        // 3) map เป็น PatientDetails ที่หน้าใช้งาน
+        const phone =
+          u?.phone ??
+          patientExtra?.user_patient_idTouser?.phone ??
+          undefined;
+        const idCard =
+          u?.id_card ??
+          patientExtra?.user_patient_idTouser?.id_card ??
+          undefined;
+
+        const mapped: PatientDetails = {
+          id: appt.patient?.id || "unknown",
+          name: patientName,
+          appointment: { date, time },
+          // ไม่มี field avatar ใน schema ที่ให้มา → ใส่รูป placeholder
+          profilePic: undefined,
+          citizenId: idCard || "-",
+          phone: phone || "-",
+          // schema ปัจจุบันไม่มี gender/age/height/weight → เผื่ออนาคต
+          gender: undefined,
+          age: undefined,
+          weight: (patientExtra as any)?.weight ?? undefined,
+          height: (patientExtra as any)?.height ?? undefined,
+          // หมายเหตุ: อาจเก็บ notes ไว้ที่ patient.symptom_note
+          notes:
+            patientExtra?.symptom_note ??
+            (appt.patient as any)?.symptom_note ??
+            appt.detail ??
+            undefined,
+          lastUpdated: new Date().toISOString(),
+        };
+
+        setData(mapped);
+      } catch (e: any) {
         console.error(e);
+        setErr(e?.message || "โหลดข้อมูลล้มเหลว");
         setData(null);
       } finally {
         setLoading(false);
@@ -52,12 +156,14 @@ export default function AppointmentDetailPage() {
   const avatarSrc = data?.profilePic || "https://i.pravatar.cc/160?img=1";
 
   return (
-    <main className="mx-auto max-w-2xl bg-gray-50 px-4 py-6">
+    <main className="mx-auto min-h-screen max-w-2xl bg-gray-50 px-4 py-6">
       <h1 className="text-xl font-semibold">ข้อมูลคนไข้</h1>
 
       {loading ? (
-        <div className="mt-4 rounded-2xl bg-white p-4 text-sm text-gray-600">
-          กำลังโหลด…
+        <div className="mt-4 rounded-2xl bg-white p-4 text-sm text-gray-600">กำลังโหลด…</div>
+      ) : err ? (
+        <div className="mt-4 rounded-2xl bg-white p-4 text-sm text-red-600">
+          เกิดข้อผิดพลาด: {err}
         </div>
       ) : !data ? (
         <div className="mt-4 rounded-2xl bg-white p-4 text-sm text-gray-600">
@@ -112,16 +218,13 @@ export default function AppointmentDetailPage() {
             </Card>
 
             <p className="text-xs text-gray-500">
-              อัปเดตล่าสุด:{" "}
-              {data.lastUpdated
-                ? new Date(data.lastUpdated).toLocaleString()
-                : "—"}
+              อัปเดตล่าสุด: {data.lastUpdated ? new Date(data.lastUpdated).toLocaleString() : "—"}
             </p>
           </section>
         </>
       )}
 
-      {/* Bottom actions */}
+      {/* Bottom actions (ในกล่องเทา ไม่ fixed ทั่วจอ) */}
       <div className="sticky bottom-0 mt-6 flex items-center justify-between rounded-2xl bg-white/90 p-4 shadow-[0_-6px_12px_-6px_rgba(0,0,0,0.08)] backdrop-blur">
         <button
           onClick={() => router.back()}

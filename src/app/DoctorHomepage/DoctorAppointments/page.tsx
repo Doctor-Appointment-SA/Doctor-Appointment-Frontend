@@ -86,7 +86,7 @@ export default function DoctorAppointmentsPage() {
   }
 
   return (
-    <main className="mx-auto max-w-2xl bg-gray-50 px-4 py-6">
+    <main className="relative mx-auto min-h-screen max-w-2xl bg-gray-50 px-4 py-6">
       <h1 className="text-xl font-semibold">Good morning, Doctor</h1>
 
       {/* Search */}
@@ -132,7 +132,7 @@ export default function DoctorAppointmentsPage() {
       )}
 
       {/* Sticky footer */}
-      <div className="sticky bottom-0 mt-6 flex items-center justify-between rounded-2xl bg-white/90 p-4 shadow-[0_-6px_12px_-6px_rgba(0,0,0,0.08)] backdrop-blur">
+      <div className="fixed bottom-0 mt-6 flex items-center justify-between rounded-2xl bg-white/90 p-4 shadow-[0_-6px_12px_-6px_rgba(0,0,0,0.08)] backdrop-blur">
         <button
           onClick={() => router.back()}
           className="rounded-lg px-4 py-2 text-sm font-medium hover:bg-gray-50 active:scale-95"

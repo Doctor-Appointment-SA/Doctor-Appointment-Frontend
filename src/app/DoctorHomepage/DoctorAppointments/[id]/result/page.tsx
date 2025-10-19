@@ -72,7 +72,7 @@ export default function AppointmentNotePage() {
   const disabled = !fullName.trim() || !caseType.trim();
 
   return (
-    <main className="mx-auto max-w-2xl bg-gray-50 px-4 py-6">
+    <main className="mx-auto min-h-screen max-w-2xl bg-gray-50 px-4 py-6">
       <h1 className="text-xl font-semibold">Good morning, Docta</h1>
 
       {loading ? (
