@@ -23,6 +23,10 @@ type RegisterPayload = {
   confirmPassword: string;
 };
 
+const temp = () => {
+  // hello this is to push to git only
+}
+
 const Authentication = () => {
   const [activeTab, setActiveTab] = useState<AuthTab>(AuthTab.LOGIN);
 
