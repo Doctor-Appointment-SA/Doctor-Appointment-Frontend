@@ -1,7 +1,8 @@
-"use client"
+"use client";
 
 import { useAuth } from "@/components/authen/AuthProvider";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function DoctorLayout({
   children,
@@ -11,11 +12,12 @@ export default function DoctorLayout({
   const { user } = useAuth();
   const router = useRouter();
 
+  // finish fetch, Authorize
+  useEffect(() => {
+    if (user && user.role !== "doctor") router.push("/403");
+  }, [user]);
+
   // user might still be fetching
-  if (user === null) return <p>loading ...</p>;
-
-  // finish fetch, Authorize 
-  if (user.role !== "doctor") router.push("/403");
-
+  if (user === null) return <p>Loading ...</p>;
   return <>{children}</>;
 }
