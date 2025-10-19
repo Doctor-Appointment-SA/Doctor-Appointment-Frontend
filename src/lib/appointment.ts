@@ -79,7 +79,7 @@ export const updateAppointmentDetail = async (
   detail: string
 ) => {
   try {
-    const res = await api.patch(`/appointment/${appointment_id}`, {
+    const res = await api.patch(`/appointment/${appointment_id}/detail`, {
       detail,
     });
     console.log("Update Response:", res.data);
