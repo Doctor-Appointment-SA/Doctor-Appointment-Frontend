@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Run when mount the page
   useEffect(() => {
     // disable auth for testing
-    // CheckAuth();
+    CheckAuth();
   }, []);
 
   return (
