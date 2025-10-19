@@ -1,0 +1,14 @@
+version: "3.9"
+services:
+  frontend:
+    build: .
+    ports: ["3000:3000"]
+    environment:
+      NEXT_PUBLIC_API_URL: "http://localhost:9000" 
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+    command: npm run dev
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    profiles: ["standalone"]   

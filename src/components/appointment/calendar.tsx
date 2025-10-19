@@ -26,21 +26,33 @@ interface Props {
 
 const DAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
+// เปรียบเทียบว่าก่อนวันนี้หรือไม่
+const isPastDate = (year: number, month: number, day: number) => {
+  const today = new Date();
+  const date = new Date(year, month, day);
+  // ตัดเวลาออกเพื่อให้เทียบแค่วัน
+  today.setHours(0, 0, 0, 0);
+  date.setHours(0, 0, 0, 0);
+  return date < today;
+};
+
 export default function Calendar({
   appointmentDate,
   setAppointmentDate,
 }: Props) {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState(0);
+  const [selectedDate, setSelectedDate] = useState(
+    Number(appointmentDate.split("-")[2]) || 0
+  );
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
-  // Get first day of the month and number of days
+  // หาวันแรกของเดือนและจำนวนวันในเดือน
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-  // Navigate months
+  // ฟังก์ชันเลื่อนไปเดือนก่อนหน้า / ถัดไป
   const goToPreviousMonth = () => {
     setCurrentDate(new Date(year, month - 1, 1));
   };
@@ -49,22 +61,13 @@ export default function Calendar({
     setCurrentDate(new Date(year, month + 1, 1));
   };
 
-  // Generate calendar days
+  // สร้าง array ของวันในปฏิทิน
   const calendarDays = [];
+  for (let i = 0; i < firstDay; i++) calendarDays.push(null);
+  for (let day = 1; day <= daysInMonth; day++) calendarDays.push(day);
 
-  // Empty cells for days before the first day of the month
-  for (let i = 0; i < firstDay; i++) {
-    calendarDays.push(null);
-  }
-
-  // Days of the month
-  for (let day = 1; day <= daysInMonth; day++) {
-    calendarDays.push(day);
-  }
-
-  // Get current time
-  const currentTime = new Date().toLocaleTimeString("en-US", {
-    hour: "numeric",
+  const currentTime = new Date().toLocaleTimeString("th-TH", {
+    hour: "2-digit",
     minute: "2-digit",
     hour12: false,
   });
@@ -110,34 +113,37 @@ export default function Calendar({
 
       {/* Calendar grid */}
       <div className="grid grid-cols-7 gap-1 mb-6">
-        {calendarDays.map((day, index) => (
-          <div key={index} className="aspect-square">
-            {day && (
+        {calendarDays.map((day, index) => {
+          if (!day) return <div key={index} className="aspect-square" />;
+
+          const isPast = isPastDate(year, month, day);
+
+          const dayDate = `${year}-${(month + 1)
+            .toString()
+            .padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+
+          return (
+            <div key={index} className="aspect-square">
               <button
+                disabled={isPast}
                 onClick={() => {
+                  setAppointmentDate(dayDate);
                   setSelectedDate(day);
-                  let today =
-                    currentDate.getFullYear() +
-                    "-" +
-                    (currentDate.getMonth() + 1).toString().padStart(2, "0") +
-                    "-" +
-                    day.toString().padStart(2, "0");
-                  console.log(today);
-                  setAppointmentDate(today);
                 }}
-                className={`w-full h-full flex items-center justify-center text-sm font-medium rounded-md transition-colors hover:bg-muted ${
-                  day === selectedDate
-                    ? "bg-blue-500 text-white hover:bg-blue-600"
-                    : day === currentDate.getDate()
-                    ? "text-blue-500"
-                    : "text-foreground"
-                }`}
+                className={`w-full h-full flex items-center justify-center text-sm font-medium rounded-md transition-colors 
+                  ${
+                    isPast
+                      ? "text-gray-400 cursor-not-allowed"
+                      : day === selectedDate
+                      ? "bg-blue-500 text-white hover:bg-blue-600"
+                      : "text-foreground hover:bg-muted"
+                  }`}
               >
                 {day}
               </button>
-            )}
-          </div>
-        ))}
+            </div>
+          );
+        })}
       </div>
 
       {/* Time display */}

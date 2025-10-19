@@ -1,17 +1,36 @@
 "use client";
 
 import AppointmentTime from "@/components/appointment/appointmentTime";
-import Calendar from "@/components/appointment/calendar";
 import DoctorList from "@/components/appointment/doctorList";
 import DoctorListItem from "@/components/appointment/doctorListItem";
 import NavButton from "@/components/appointment/navButton";
 import { DoctorProps } from "@/props/doctorInfo";
-import axios from "axios";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+import { getTodayThai, patientCreateAppointment, isPast } from "@/lib/appointment";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+const Calendar = dynamic(() => import("@/components/appointment/calendar"), {
+  ssr: false,
+});
 
-const TimeList = ["9:00", "10:00", "11:00", "12:00", "13:00", "14:00"];
-
-let patient_id = "";
+const TimeList = [
+  "2:00",
+  "9:00",
+  "10:00",
+  "11:00",
+  "12:00",
+  "13:00",
+  "14:00",
+  "15:00",
+  "16:00",
+];
 
 const PatientAppointmentPage = () => {
   const [selectedDoctor, setSelectedDoctor] = useState<DoctorProps | null>(
@@ -20,61 +39,22 @@ const PatientAppointmentPage = () => {
   const [isDoctorListOpen, setIsDoctorListOpen] = useState(false);
   const [isTimeModalOpen, setIsTimeModalOpen] = useState(false);
   const [selectedTime, setSelectedTime] = useState("");
-  const [appointmentDate, setAppointmentDate] = useState("");
+  const [appointmentDate, setAppointmentDate] = useState(getTodayThai());
+  const [doctorSchedule, setDoctorSchedule] = useState<string[]>([]);
+  const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
 
   // useEffect(() => {
   //   console.log(selectedDoctor);
   // }, [selectedDoctor]);
 
-  const whoAmI = async () => {
-    try {
-      const token = localStorage.getItem("access_token");
-      // Call your API with Authorization header
-      // const user = await api.get("/auth/whoami", {
-      //   Authorization: `Bearer ${token}`,
-      // });
-      // return user;
-      const res = await axios.get("http://localhost:4001/api/auth/whoami", {
-        headers: {
-          Authorization: `Bearer ${token}`, // ถ้าใช้ JWT ใน localStorage
-        },
-      });
-      patient_id = res.data.id;
-      return res.data;
-    } catch (error) {
-      console.log("Error on creating appointment:", error);
-      return null;
-    }
-  };
+  useEffect(() => {
+    setSelectedTime("");
+  }, [appointmentDate]);
 
-  const handleSubmit = async () => {
-    try {
-      const user = await whoAmI();
-      if (!user) {
-        console.log("Unauthorized: You must login first");
-        return;
-      }
-      console.log("User authorized:", user);
-      console.log(selectedDoctor?.id);
-      const token = localStorage.getItem("access_token");
-      const res = await axios.post(
-        "http://localhost:3001/appointment",
-        {
-          // patient_id,
-          doctor_id: selectedDoctor?.id,
-          appoint_date: appointmentDate + "T" + selectedTime + ":00.000Z",
-          status: "Pending",
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      console.log("Response:", res.data);
-    } catch (error) {
-      console.log("Error on creating appointment:", error);
-    }
+  const handleCloseSuccessDialog = () => {
+    setIsSuccessDialogOpen(false);
+    setSelectedDoctor(null);
+    setSelectedTime("");
   };
 
   return (
@@ -112,12 +92,16 @@ const PatientAppointmentPage = () => {
                 <button
                   key={time}
                   className={`py-2 px-3 rounded-[10px] ${
-                    selectedTime === time
+                    doctorSchedule?.includes(time) || isPast(time, appointmentDate)
+                      ? "text-[#757575] bg-[#BCB2B2]"
+                      : selectedTime === time
                       ? "text-[#F5F5F5] bg-[#14AE5C]"
                       : "text-[#757575] bg-[#F5F5F5]"
                   }`}
                   onClick={() => {
-                    setSelectedTime(time);
+                    if (!doctorSchedule?.includes(time) && !isPast(time, appointmentDate)) {
+                      setSelectedTime(time);
+                    }
                   }}
                 >
                   {time}
@@ -139,7 +123,16 @@ const PatientAppointmentPage = () => {
           text="ยืนยัน"
           textColor="#F5F5F5"
           bgColor="#2C2C2C"
-          onClick={handleSubmit}
+          onClick={() => {
+            if (selectedDoctor) {
+              patientCreateAppointment(
+                selectedDoctor,
+                appointmentDate,
+                selectedTime
+              );
+              setIsSuccessDialogOpen(true);
+            }
+          }}
         />
       </div>
 
@@ -156,10 +149,51 @@ const PatientAppointmentPage = () => {
         isTimeModalOpen={isTimeModalOpen}
         setIsTimeModalOpen={setIsTimeModalOpen}
         selectedDoctor={selectedDoctor}
-        selectedTime={selectedTime}
+        appointmentDate={appointmentDate}
         setSelectedTime={setSelectedTime}
         setIsDoctorListOpen={setIsDoctorListOpen}
+        doctorSchedule={doctorSchedule}
+        setDoctorSchedule={setDoctorSchedule}
       />
+      
+      <Dialog open={isSuccessDialogOpen} onOpenChange={setIsSuccessDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center text-2xl">
+              สร้างนัดหมายสำเร็จ
+            </DialogTitle>
+
+            <DialogDescription asChild>
+              <div className="text-center pt-4">
+                <div className="space-y-2">
+                  <div className="text-base">
+                    นัดหมายของคุณได้ถูกบันทึกเรียบร้อยแล้ว
+                    กรุณารอการยืนยันจากแพทย์
+                  </div>
+
+                  {selectedDoctor && (
+                    <div className="mt-4 p-4 bg-muted rounded-lg">
+                      <p className="font-semibold">รายละเอียดการนัด:</p>
+                      <p>แพทย์: {selectedDoctor.name}</p>
+                      <p>วันที่: {appointmentDate}</p>
+                      <p>เวลา: {selectedTime} น.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex justify-center gap-3 mt-4">
+            <Button
+              onClick={handleCloseSuccessDialog}
+              className="bg-[#14AE5C] hover:bg-[#12a054] text-white px-8"
+            >
+              ตกลง
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
