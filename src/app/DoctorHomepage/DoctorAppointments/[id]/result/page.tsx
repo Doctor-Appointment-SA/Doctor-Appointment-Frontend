@@ -1,143 +1,241 @@
 // ------------------------------------------------------------
-// File: src/app/doctor/appointments/[id]/note/page.tsx
+// File: src/app/DoctorHomepage/DoctorAppointments/[id]/result/page.tsx
 "use client";
-import React, { useEffect, useState } from "react";
+
+import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
-type PatientDetails = {
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001";
+
+/* ---------- Types ---------- */
+type Appointment = {
   id: string;
-  name: string;
-  appointment: { date: string; time: string };
-  profilePic?: string;
-  citizenId?: string;
-  gender?: string;
-  age?: number;
-  weight?: number;
-  height?: number;
-  phone?: string;
-  allergies?: string[];
-  conditions?: string[];
-  address?: string;
-  lastUpdated?: string; // ISO
-  notes?: string;
+  appoint_date?: string | null;
+  detail?: string | null;
+  doctor_id?: string | null;
+  patient_id?: string | null;
+  doctor?: { id: string } | null;
+  patient?: { id: string } | null;
 };
 
-export default function AppointmentNotePage() {
-  const { id } = useParams<{ id: string }>();
+type MedicalRecord = {
+  id: string;
+  doctor_id: string;
+  patient_id: string;
+  diagnosis?: string | null;
+  notes?: string | null;
+  createdAt?: number | null; // seconds
+};
+
+type Patient = {
+  id: string;
+  user?: { name?: string | null; lastname?: string | null } | null;
+  user_patient_idTouser?: { name?: string | null; lastname?: string | null } | null;
+  name?: string | null;
+  lastname?: string | null;
+};
+
+export default function ResultPage() {
+  const params = useParams<{ id: string }>();
+  const appointmentId = Array.isArray(params?.id) ? params.id[0] : params?.id;
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
-  const [patient, setPatient] = useState<PatientDetails | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
 
-  // form states
-  const [fullName, setFullName] = useState("");
-  const [caseType, setCaseType] = useState("");
-  const [note, setNote] = useState("");
-  const [followUp, setFollowUp] = useState(false);
-  const [sendHome, setSendHome] = useState(false);
+  const [doctorId, setDoctorId] = useState("");
+  const [patientId, setPatientId] = useState("");
+  const [patientName, setPatientName] = useState("");
+  const [apptDate, setApptDate] = useState<string>("-");
+  const [apptTime, setApptTime] = useState<string>("-");
 
-  // โหลดข้อมูล mock ตาม id
-  useEffect(() => {
-    if (!id) return;
-    (async () => {
-      try {
-        setLoading(true);
-        const res = await fetch(`/mock/patients/${id}`, { cache: "no-store" });
-        if (!res.ok) throw new Error("not-found");
-        const data: PatientDetails = await res.json();
-        setPatient(data);
+  const [record, setRecord] = useState<MedicalRecord | null>(null);
+  const [diagnosis, setDiagnosis] = useState("");
+  const [notes, setNotes] = useState("");
 
-        // ตั้งค่าเริ่มต้นฟอร์มจาก mock
-        setFullName(data.name || "");
-        setCaseType(data.conditions?.[0] || "ทั่วไป");
-        setNote("");
-      } catch (e) {
-        console.error(e);
-        setError("ไม่พบข้อมูลคนไข้");
-        setPatient(null);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [id]);
+  const createdAtText = useMemo(() => {
+    if (!record?.createdAt) return "-";
+    return new Date(record.createdAt * 1000).toLocaleString();
+  }, [record?.createdAt]);
 
-  function onConfirm() {
-    // DEMO only
-    console.log("save note", { id, fullName, caseType, note, followUp, sendHome });
-    alert("บันทึกโน้ตเดโม่แล้ว (ยังไม่เชื่อม API)");
-    router.push(`/DoctorHomepage/DoctorAppointments/${String(id)}`);
+  /* ---------- Helpers ---------- */
+  async function fetchAppointment(aid: string): Promise<Appointment> {
+    const r = await fetch(`${API_BASE}/appointments/${aid}`, {
+      cache: "no-store",
+      credentials: "include",
+    });
+    if (!r.ok) throw new Error(`Fetch appointment failed: ${r.status}`);
+    return r.json();
   }
 
-  const disabled = !fullName.trim() || !caseType.trim();
+  async function fetchPatientName(pid: string) {
+    try {
+      const r = await fetch(`${API_BASE}/patients/${pid}`, {
+        cache: "no-store",
+        credentials: "include",
+      });
+      if (!r.ok) return setPatientName(pid);
+      const p: Patient = await r.json();
+      const n = p.user?.name ?? p.user_patient_idTouser?.name ?? p.name ?? "";
+      const l = p.user?.lastname ?? p.user_patient_idTouser?.lastname ?? p.lastname ?? "";
+      const full = [n, l].filter(Boolean).join(" ").trim();
+      setPatientName(full || pid);
+    } catch {
+      setPatientName(pid);
+    }
+  }
+
+  async function fetchRecordByPair(did: string, pid: string) {
+    const r = await fetch(`${API_BASE}/medical_record/of/${did}/${pid}`, {
+      cache: "no-store",
+      credentials: "include",
+    });
+    if (r.status === 404) {
+      setRecord(null);
+      setDiagnosis("");
+      setNotes("");
+      return;
+    }
+    if (!r.ok) throw new Error(`Fetch record failed: ${r.status}`);
+    const rec: MedicalRecord = await r.json();
+    setRecord(rec);
+    setDiagnosis(rec.diagnosis ?? "");
+    setNotes(rec.notes ?? "");
+  }
+
+  const fetchAll = async () => {
+    setErr(null);
+    setLoading(true);
+    try {
+      if (!appointmentId || appointmentId === "undefined") {
+        throw new Error("appointmentId is undefined");
+      }
+
+      // 1) Appointment → เอา doctor_id / patient_id + เวลา
+      const appt = await fetchAppointment(String(appointmentId));
+      const did = appt.doctor_id ?? appt.doctor?.id;
+      const pid = appt.patient_id ?? appt.patient?.id;
+      if (!did || !pid) throw new Error("Appointment missing doctor_id or patient_id");
+
+      setDoctorId(did);
+      setPatientId(pid);
+
+      const d = appt.appoint_date ? new Date(appt.appoint_date) : null;
+      setApptDate(
+        d ? d.toLocaleDateString("th-TH", { year: "numeric", month: "short", day: "2-digit" }) : "-"
+      );
+      setApptTime(d ? d.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) : "-");
+
+      // 2) ชื่อคนไข้
+      await fetchPatientName(pid);
+
+      // 3) โหลด/เช็ค medical record ของคู่
+      await fetchRecordByPair(did, pid);
+    } catch (e: any) {
+      setErr(e?.message || "Load failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!appointmentId || appointmentId === "undefined") return;
+    fetchAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appointmentId]);
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      setErr(null);
+      const r = await fetch(`${API_BASE}/medical_record/of/${doctorId}/${patientId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ diagnosis, notes }),
+      });
+      if (!r.ok) throw new Error(`Save failed: ${r.status}`);
+      await fetchAll();
+    } catch (e: any) {
+      setErr(e?.message || "Save failed");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /* ---------- UI ---------- */
+  const avatarSrc = "https://i.pravatar.cc/160?img=1";
+
+  if (loading) {
+    return (
+      <main className="mx-auto min-h-screen max-w-2xl bg-gray-50 px-4 py-6">
+        <h1 className="text-xl font-semibold">Edit Medical Record</h1>
+        <div className="mt-4 rounded-2xl bg-white p-4 text-sm text-gray-600">กำลังโหลด…</div>
+      </main>
+    );
+  }
 
   return (
     <main className="mx-auto min-h-screen max-w-2xl bg-gray-50 px-4 py-6">
-      <h1 className="text-xl font-semibold">Good morning, Docta</h1>
+      <h1 className="text-xl font-semibold">Edit Medical Record</h1>
 
-      {loading ? (
-        <div className="mt-4 rounded-2xl bg-white p-4 text-sm text-gray-600">กำลังโหลด…</div>
-      ) : error || !patient ? (
-        <div className="mt-4 rounded-2xl bg-white p-4 text-sm text-gray-600">
-          {error || `ไม่พบข้อมูลคนไข้ ID: ${String(id)}`}
+      {err && (
+        <div className="mt-4 rounded-2xl bg-white p-4 text-sm text-red-600">
+          {err}
         </div>
-      ) : (
-        <>
-          {/* สรุปการนัดแบบย่อ */}
-          <section className="mt-4 flex items-center justify-between rounded-2xl bg-blue-300/80 p-4">
-            <div>
-              <p className="text-base font-medium">{patient.name}</p>
-              <p className="text-sm text-gray-700">
-                {patient.appointment.date} • {patient.appointment.time}
-              </p>
-            </div>
-            <img
-              src={patient.profilePic || "https://i.pravatar.cc/160?img=1"}
-              alt={patient.name}
-              className="h-14 w-14 rounded-full object-cover ring-2 ring-white/70 shadow-md"
-            />
-          </section>
-
-          {/* ฟอร์มบันทึกโน้ต */}
-          <section className="mt-4 rounded-2xl bg-white p-4">
-            <h2 className="text-lg font-semibold">Health information</h2>
-
-            <div className="mt-4 space-y-3">
-              <div>
-                <label className="mb-1 block text-sm text-gray-700">Full Name</label>
-                <input
-                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Value"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm text-gray-700">Case</label>
-                <input
-                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={caseType}
-                  onChange={(e) => setCaseType(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm text-gray-700">Medical note</label>
-                <textarea
-                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  rows={3}
-                  placeholder="บันทึกสั้นๆ"
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                />
-              </div>
-            </div>
-          </section>
-
-          
-        </>
       )}
 
-      {/* Sticky footer */}
+      {/* สรุปด้านบน: เหมือนหน้าแรก */}
+      <section className="mt-4 flex items-center justify-between rounded-2xl bg-blue-300/80 p-4">
+        <div>
+          <p className="text-base font-medium">{patientName || "-"}</p>
+          <p className="text-sm text-gray-600">
+            {apptDate} • {apptTime}
+          </p>
+        </div>
+        <img
+          src={avatarSrc}
+          alt="avatar"
+          className="h-16 w-16 rounded-full object-cover ring-2 ring-white/70 shadow-md"
+        />
+      </section>
+
+      {/* การ์ดข้อมูล (อ่านอย่างเดียว) ให้หน้าตาเหมือนกัน */}
+      <section className="mt-4 grid gap-4">
+        <Card title="ข้อมูลเวชระเบียน">
+          <Row label="Record ID" value={record?.id || "—"} />
+          <Row label="Created At" value={createdAtText} />
+        </Card>
+
+        {/* การ์ดแก้ไข: Diagnosis & Notes */}
+        <Card title="สรุปการรักษา">
+          <div className="space-y-3">
+            <div>
+              <div className="mb-1 text-xs text-gray-600">Diagnosis</div>
+              <input
+                value={diagnosis}
+                onChange={(e) => setDiagnosis(e.target.value)}
+                className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/5"
+                placeholder="e.g., Influenza"
+              />
+            </div>
+
+            <div>
+              <div className="mb-1 text-xs text-gray-600">บันทึกอาการ</div>
+              <textarea
+                rows={5}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/5"
+                placeholder="เช่น ให้ยาลดไข้ พักผ่อน 2–3 วัน"
+              />
+            </div>
+          </div>
+        </Card>
+      </section>
+
+      {/* ปุ่มด้านล่าง (sticky) — โทนเดียวกับหน้าแรก */}
       <div className="sticky bottom-0 mt-6 flex items-center justify-between rounded-2xl bg-white/90 p-4 shadow-[0_-6px_12px_-6px_rgba(0,0,0,0.08)] backdrop-blur">
         <button
           onClick={() => router.back()}
@@ -145,16 +243,42 @@ export default function AppointmentNotePage() {
         >
           Back
         </button>
-        <button
-          onClick={onConfirm}
-          disabled={disabled}
-          className={`rounded-lg px-4 py-2 text-sm font-medium text-white ${
-            disabled ? "bg-gray-300 cursor-not-allowed" : "bg-black hover:opacity-90"
-          }`}
-        >
-          Confirm
-        </button>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={fetchAll}
+            className="rounded-lg px-3 py-2 text-sm font-medium hover:bg-gray-50"
+          >
+            Refresh
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+          >
+            {saving ? "Saving..." : "Save"}
+          </button>
+        </div>
       </div>
     </main>
+  );
+}
+
+/* ---------------- helper components (หน้าตาเดียวกับหน้าแรก) ---------------- */
+function Card({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="rounded-2xl bg-white p-4">
+      <h2 className="text-sm font-medium text-gray-800">{title}</h2>
+      <div className="mt-2 space-y-2">{children}</div>
+    </section>
+  );
+}
+
+function Row({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-3 text-sm">
+      <div className="w-36 shrink-0 text-gray-500">{label}</div>
+      <div className="flex-1 text-gray-900">{value}</div>
+    </div>
   );
 }
