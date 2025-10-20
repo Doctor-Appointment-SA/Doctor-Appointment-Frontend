@@ -3,6 +3,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { getCookie } from "@/lib/authentication";
 
 export type PatientDetails = {
   id: string;
@@ -80,9 +81,13 @@ export default function AppointmentDetailPage() {
         if (!base) throw new Error("NEXT_PUBLIC_API_BASE is not set");
 
         // 1) ดึงนัด (เส้นทาง backend ของคุณเป็นพหูพจน์)
+        console.log("appointment_id: ", id);
+        const access_token = getCookie("access_token");
+        console.log("access_token hereee", access_token);
         const res = await fetch(`${base}/appointments/${id}`, {
-          cache: "no-store",
-          credentials: "include",
+          headers: {
+            Authorization: `Bearer ${access_token}`, // replace with your token variable
+          },
         });
         if (!res.ok) throw new Error(`ไม่สามารถโหลดนัดได้ (${res.status})`);
         const appt: AppointmentAPI = await res.json();
@@ -90,10 +95,17 @@ export default function AppointmentDetailPage() {
         // วัน-เวลา
         const d = appt.appoint_date ? new Date(appt.appoint_date) : null;
         const date = d
-          ? d.toLocaleDateString("th-TH", { year: "numeric", month: "short", day: "2-digit" })
+          ? d.toLocaleDateString("th-TH", {
+              year: "numeric",
+              month: "short",
+              day: "2-digit",
+            })
           : "-";
         const time = d
-          ? d.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })
+          ? d.toLocaleTimeString("th-TH", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
           : "-";
 
         // ชื่อจาก relation user
@@ -125,10 +137,13 @@ export default function AppointmentDetailPage() {
 
         if (doctorId && patientId) {
           try {
-            const mr = await fetch(`${base}/medical_record/of/${doctorId}/${patientId}`, {
-              cache: "no-store",
-              credentials: "include",
-            });
+            const mr = await fetch(
+              `${base}/medical_record/of/${doctorId}/${patientId}`,
+              {
+                cache: "no-store",
+                credentials: "include",
+              }
+            );
             if (mr.ok) {
               const rec: MedicalRecord = await mr.json();
               notesFromMedicalRecord = rec.notes ?? undefined;
@@ -139,18 +154,30 @@ export default function AppointmentDetailPage() {
         // รวมข้อมูล
         const merged = {
           hospital_number:
-            appt.patient?.hospital_number ?? patientExtra?.hospital_number ?? undefined,
+            appt.patient?.hospital_number ??
+            patientExtra?.hospital_number ??
+            undefined,
           symptom_note:
-            appt.patient?.symptom_note ?? patientExtra?.symptom_note ?? undefined,
+            appt.patient?.symptom_note ??
+            patientExtra?.symptom_note ??
+            undefined,
           blood_drawn_at:
-            appt.patient?.blood_drawn_at ?? patientExtra?.blood_drawn_at ?? undefined,
+            appt.patient?.blood_drawn_at ??
+            patientExtra?.blood_drawn_at ??
+            undefined,
           missed_arv_days:
-            appt.patient?.missed_arv_days ?? patientExtra?.missed_arv_days ?? undefined,
+            appt.patient?.missed_arv_days ??
+            patientExtra?.missed_arv_days ??
+            undefined,
           user: {
             id_card:
-              u?.id_card ?? patientExtra?.user_patient_idTouser?.id_card ?? undefined,
+              u?.id_card ??
+              patientExtra?.user_patient_idTouser?.id_card ??
+              undefined,
             phone:
-              u?.phone ?? patientExtra?.user_patient_idTouser?.phone ?? undefined,
+              u?.phone ??
+              patientExtra?.user_patient_idTouser?.phone ??
+              undefined,
           },
         };
 
@@ -165,8 +192,14 @@ export default function AppointmentDetailPage() {
           hospitalNumber: merged.hospital_number || "-",
           bloodDrawnAt: merged.blood_drawn_at || undefined,
           missedArvDays:
-            typeof merged.missed_arv_days === "number" ? merged.missed_arv_days : undefined,
-          notes: notesFromMedicalRecord ?? merged.symptom_note ?? appt.detail ?? undefined,
+            typeof merged.missed_arv_days === "number"
+              ? merged.missed_arv_days
+              : undefined,
+          notes:
+            notesFromMedicalRecord ??
+            merged.symptom_note ??
+            appt.detail ??
+            undefined,
           lastUpdated: new Date().toISOString(),
         };
 
@@ -188,7 +221,9 @@ export default function AppointmentDetailPage() {
       <h1 className="text-xl font-semibold">ข้อมูลคนไข้</h1>
 
       {loading ? (
-        <div className="mt-4 rounded-2xl bg-white p-4 text-sm text-gray-600">กำลังโหลด…</div>
+        <div className="mt-4 rounded-2xl bg-white p-4 text-sm text-gray-600">
+          กำลังโหลด…
+        </div>
       ) : err ? (
         <div className="mt-4 rounded-2xl bg-white p-4 text-sm text-red-600">
           เกิดข้อผิดพลาด: {err}
@@ -233,7 +268,11 @@ export default function AppointmentDetailPage() {
               />
               <Row
                 label="ขาดยา ARV (วัน)"
-                value={typeof data.missedArvDays === "number" ? data.missedArvDays : "-"}
+                value={
+                  typeof data.missedArvDays === "number"
+                    ? data.missedArvDays
+                    : "-"
+                }
               />
             </Card>
 
@@ -244,7 +283,10 @@ export default function AppointmentDetailPage() {
             </Card>
 
             <p className="text-xs text-gray-500">
-              อัปเดตล่าสุด: {data.lastUpdated ? new Date(data.lastUpdated).toLocaleString() : "—"}
+              อัปเดตล่าสุด:{" "}
+              {data.lastUpdated
+                ? new Date(data.lastUpdated).toLocaleString()
+                : "—"}
             </p>
           </section>
         </>
@@ -260,7 +302,11 @@ export default function AppointmentDetailPage() {
         </button>
         {data && (
           <button
-            onClick={() => router.push(`/DoctorHomepage/DoctorAppointments/${String(id)}/result`)}
+            onClick={() =>
+              router.push(
+                `/DoctorHomepage/DoctorAppointments/${String(id)}/result`
+              )
+            }
             className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white hover:opacity-90"
           >
             Next
@@ -272,7 +318,13 @@ export default function AppointmentDetailPage() {
 }
 
 /* ---------------- helper components ---------------- */
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
+function Card({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <section className="rounded-2xl bg-white p-4">
       <h2 className="text-sm font-medium text-gray-800">{title}</h2>

@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useAuth } from "@/components/authen/AuthProvider";
 
 /** ---------------- Types (match your schema) ---------------- */
 type DoctorProfile = {
@@ -42,7 +43,8 @@ async function resolveDoctorId(base: string): Promise<string | null> {
   if (fromQuery) return fromQuery;
 
   // 3) env
-  if (process.env.NEXT_PUBLIC_DOCTOR_ID) return process.env.NEXT_PUBLIC_DOCTOR_ID;
+  if (process.env.NEXT_PUBLIC_DOCTOR_ID)
+    return process.env.NEXT_PUBLIC_DOCTOR_ID;
 
   // 4) session endpoint (ถ้ามี)
   try {
@@ -59,7 +61,7 @@ async function resolveDoctorId(base: string): Promise<string | null> {
 
 /** ---------------- Page ---------------- */
 export default function DoctorHomepage() {
-  const [doctorId, setDoctorId] = useState<string | null>(null);
+  const [doctorId, setDoctorId] = useState<string>();
   const [doctorName, setDoctorName] = useState<string | null>(null);
 
   const [countConfirmed, setCountConfirmed] = useState<number | null>(null);
@@ -71,6 +73,9 @@ export default function DoctorHomepage() {
     [countConfirmed, countPending]
   );
 
+  const {user} = useAuth();
+
+  
   useEffect(() => {
     (async () => {
       setErr(null);
@@ -80,8 +85,11 @@ export default function DoctorHomepage() {
         if (!base) throw new Error("NEXT_PUBLIC_API_BASE is not set");
 
         // 1) หา doctorId
-        const id = await resolveDoctorId(base);
+        // const id = await resolveDoctorId(base);
+        
+        const id = user?.id;
         setDoctorId(id);
+        console.log("doctor_id", id);
 
         // 2) ดึงชื่อหมอ
         if (id) {
@@ -92,7 +100,10 @@ export default function DoctorHomepage() {
             });
             if (res.ok) {
               const doc: DoctorProfile = await res.json();
-              const nm = [doc.user?.name, doc.user?.lastname].filter(Boolean).join(" ").trim();
+              const nm = [doc.user?.name, doc.user?.lastname]
+                .filter(Boolean)
+                .join(" ")
+                .trim();
               setDoctorName(nm || null);
             }
           } catch {
@@ -125,7 +136,8 @@ export default function DoctorHomepage() {
           }),
         ]);
 
-        if (!resC.ok) throw new Error(`Fetch confirmed failed (${resC.status})`);
+        if (!resC.ok)
+          throw new Error(`Fetch confirmed failed (${resC.status})`);
         if (!resP.ok) throw new Error(`Fetch pending failed (${resP.status})`);
 
         const arrC: unknown[] = await resC.json();
@@ -140,7 +152,7 @@ export default function DoctorHomepage() {
         setCountPending(0);
       }
     })();
-  }, []);
+  }, [user]);
 
   return (
     <main className="mx-auto min-h-screen max-w-2xl bg-gray-50 px-4 py-6">
@@ -148,26 +160,33 @@ export default function DoctorHomepage() {
         Good morning, {doctorName ? `Dr. ${doctorName}` : "Doctor"}
       </h1>
 
-
       <section className="mt-4">
-        <h2 className="text-sm font-medium text-gray-800">Upcoming Appointments</h2>
+        <h2 className="text-sm font-medium text-gray-800">
+          Upcoming Appointments
+        </h2>
         <StatButton
           className="mt-2"
           title="นัดทั้งหมดที่ยืนยันแล้วของคุณ"
           count={loading ? undefined : countConfirmed ?? 0}
           avatar="👩‍⚕️"
-          href={`/DoctorHomepage/DoctorAppointments?status=CONFIRMED${doctorId ? `&doctorId=${doctorId}` : ""}`}
+          href={`/DoctorHomepage/DoctorAppointments?status=CONFIRMED${
+            doctorId ? `&doctorId=${doctorId}` : ""
+          }`}
         />
       </section>
 
       <section className="mt-6">
-        <h2 className="text-sm font-medium text-gray-800">Pending Appointments</h2>
+        <h2 className="text-sm font-medium text-gray-800">
+          Pending Appointments
+        </h2>
         <StatButton
           className="mt-2"
           title="นัดที่ยังไม่ยืนยัน"
           count={loading ? undefined : countPending ?? 0}
           avatar="👩‍⚕️"
-          href={`/DoctorHomepage/DoctorAppointments?status=PENDING${doctorId ? `&doctorId=${doctorId}` : ""}`}
+          href={`/DoctorHomepage/DoctorAppointments?status=PENDING${
+            doctorId ? `&doctorId=${doctorId}` : ""
+          }`}
         />
       </section>
 
@@ -198,6 +217,9 @@ function StatButton({
   className?: string;
 }) {
   const loading = typeof count === "undefined";
+  const { user } = useAuth();
+
+  console.log("user from layout", user);
 
   return (
     <Link
