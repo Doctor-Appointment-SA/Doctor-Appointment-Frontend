@@ -174,7 +174,7 @@ export default function ScreeningPage() {
         {/* 3) Adherence / missed pills */}
         <fieldset className="bg-white rounded-2xl p-3 shadow-sm mb-3">
           <legend className="font-medium text-slate-900 mb-2">
-            ขาดยาหรือกินยาช้ากว่า 5 นาที
+            ขาดยาหรือกินยาช้าเกิน 5 นาที
           </legend>
           <label className="flex items-center gap-2 text-sm mb-2">
             <input
@@ -204,7 +204,7 @@ export default function ScreeningPage() {
               checked={adherence === "no_regular"}
               onChange={() => setAdherence("no_regular")}
             />
-            <span>ไม่ยากินประจำ / ไม่ขาดยา</span>
+            <span>ไม่มียาประจำ / ไม่ขาดยา</span>
           </label>
         </fieldset>
 
@@ -237,7 +237,7 @@ export default function ScreeningPage() {
             onClick={() => submit("receive_medicine")}
             className="rounded-xl px-4 py-2 text-sm bg-amber-400 text-black disabled:opacity-60"
           >
-            Receive Medicine (chronic patient)
+            Order Medicine (chronic patient)
           </button>
           <button
             disabled={submitting}
