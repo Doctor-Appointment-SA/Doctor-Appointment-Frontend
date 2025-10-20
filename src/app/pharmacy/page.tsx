@@ -113,18 +113,12 @@ export default function PharmacyPage() {
 
   const submit = async () => {
     setMsg(null);
-    if (ctxLoading) return; // wait until IDs loaded
+
     if (!patientId.trim()) return setMsg("ไม่พบ Patient ID");
     if (items.length === 0) return setMsg("ยังไม่ได้เลือกยา");
 
     setSubmitting(true);
     try {
-      const token = localStorage.getItem("access_token");
-      if (!token) {
-        setSubmitting(false);
-        return setMsg("กรุณาเข้าสู่ระบบก่อน (missing token)");
-      }
-
       const payload = {
         doctor_id: doctorId,
         patient_id: patientId,
@@ -132,32 +126,33 @@ export default function PharmacyPage() {
         items: items.map((it) => ({
           medicine_id: it.medicine.id,
           qty: it.qty,
-          note: it.note, // backend currently ignores per-item note unless you add a column
+          note: it.note,
         })),
       };
 
-      await axios.post(API.createPrescription, payload, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      // attach token only if available; still send even if missing
+      const token = localStorage.getItem("access_token");
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers.Authorization = `Bearer ${token}`;
 
+      await axios.post(API.createPrescription, payload, { headers });
+
+      // success UI
       setMsg("ส่งใบสั่งยาเรียบร้อย ✅");
       setItems([]);
       setGlobalNote("");
       setFollowUp(false);
     } catch (e: any) {
-      if (e?.response?.status === 403) {
-        setMsg(
-          "คุณไม่มีสิทธิ์สร้างใบสั่งยาสำหรับผู้ป่วยนี้ (ownership check ล้มเหลว)"
-        );
-      } else if (e?.response?.status === 401) {
-        setMsg("กรุณาเข้าสู่ระบบใหม่ (401)");
-      } else {
-        setMsg(e?.response?.data?.message ?? "ส่งไม่สำเร็จ");
-      }
+      // show backend’s reason
+      const status = e?.response?.status;
+      if (status === 401) setMsg("ถูกปฏิเสธโดยเซิร์ฟเวอร์: ต้องเข้าสู่ระบบ (401)");
+      else if (status === 403) setMsg("ถูกปฏิเสธโดยเซิร์ฟเวอร์: ไม่มีสิทธิ์ (403)");
+      else setMsg(e?.response?.data?.message ?? "ส่งไม่สำเร็จ");
     } finally {
       setSubmitting(false);
     }
   };
+
 
   return (
     <div className="min-h-[100dvh] flex justify-center bg-slate-50">

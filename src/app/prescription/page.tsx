@@ -66,7 +66,7 @@ type Rx = {
 };
 
 /* ========= API ========= */
-const API_BASE = "http://localhost:3001";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 const API = {
   rx: (id: string) => `${API_BASE}/pharmacy/prescriptions/${id}`,
   rxStatus: (id: string) => `${API_BASE}/pharmacy/prescriptions/${id}/status`,
@@ -246,7 +246,10 @@ export default function PrescriptionDetail({
             </span>
             <span
               className="px-2 py-1 rounded-lg border"
-              style={{ color: colorForStatus(rx?.status), borderColor: colorForStatus(rx?.status) }}
+              style={{
+                color: colorForStatus(rx?.status),
+                borderColor: colorForStatus(rx?.status),
+              }}
             >
               {rx?.status ?? "—"}
             </span>
@@ -254,10 +257,7 @@ export default function PrescriptionDetail({
 
           {/* Items */}
           <div className="bg-white rounded-2xl p-3 shadow-sm">
-            <p
-              className="font-medium mb-2"
-              style={{ color: "var(--primary)" }}
-            >
+            <p className="font-medium mb-2" style={{ color: "var(--primary)" }}>
               รายการยา
             </p>
 
@@ -289,7 +289,10 @@ export default function PrescriptionDetail({
                             {m?.form ?? ""}
                           </p>
                           {it.note ? (
-                            <p className="text-xs mt-1" style={{ color: "var(--muted)" }}>
+                            <p
+                              className="text-xs mt-1"
+                              style={{ color: "var(--muted)" }}
+                            >
                               Note: {it.note}
                             </p>
                           ) : null}
@@ -351,8 +354,12 @@ export default function PrescriptionDetail({
             </div>
 
             {msg && (
-              <p className="text-sm mt-2"
-                style={{ color: msg.includes("✅") ? "var(--ok)" : "var(--danger)" }}>
+              <p
+                className="text-sm mt-2"
+                style={{
+                  color: msg.includes("✅") ? "var(--ok)" : "var(--danger)",
+                }}
+              >
                 {msg}
               </p>
             )}
