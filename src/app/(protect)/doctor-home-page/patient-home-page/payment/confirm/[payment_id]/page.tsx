@@ -30,16 +30,17 @@ const confirm = () => {
     if (delivery) {
       const tracking_id = data.tracking_data.id;
       console.log("tracing_id", tracking_id);
-      router.push(`/payment/track/${tracking_id}`);
+      router.push(`/patient-home-page/payment/track/${tracking_id}`);
     } else {
-      router.push("/authen");
+      router.push("/patient-home-page");
     }
   };
 
   const handleCancel = async () => {
     const data = await CancelPayment(payment_id);
+    console.log("data is deleteddddddddddddddddddddddddddddd")
     const prescription_id = data.prescription_id;
-    router.push(`/payment/${prescription_id}`);
+    router.push(`/patient-home-page/payment/${prescription_id}`);
   };
 
   // subscribe to payment backend to CANCEL the payment at real time
@@ -52,9 +53,10 @@ const confirm = () => {
   // redirect when payment is expired
   useEffect(() => {
     if (paymentExpired) {
-      router.push(`/payment/${prescription_id}`);
+      router.push(`/patient-home-page/payment/${prescription_id}`);
     }
   }, [paymentExpired, prescription_id]);
+
 
   return (
     <main className="mx-auto my-10 w-[390px] h-[844px] bg-amber-50">

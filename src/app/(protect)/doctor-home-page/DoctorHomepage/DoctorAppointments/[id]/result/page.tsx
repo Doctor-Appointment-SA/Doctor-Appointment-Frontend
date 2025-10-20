@@ -4,6 +4,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { getCookie } from "@/lib/authentication";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001";
 
@@ -30,7 +31,10 @@ type MedicalRecord = {
 type Patient = {
   id: string;
   user?: { name?: string | null; lastname?: string | null } | null;
-  user_patient_idTouser?: { name?: string | null; lastname?: string | null } | null;
+  user_patient_idTouser?: {
+    name?: string | null;
+    lastname?: string | null;
+  } | null;
   name?: string | null;
   lastname?: string | null;
 };
@@ -61,9 +65,12 @@ export default function ResultPage() {
 
   /* ---------- Helpers ---------- */
   async function fetchAppointment(aid: string): Promise<Appointment> {
+    const access_token = getCookie("access_token");
+
     const r = await fetch(`${API_BASE}/appointments/${aid}`, {
-      cache: "no-store",
-      credentials: "include",
+      headers: {
+        Authorization: `Bearer ${access_token}`, // replace with your token variable
+      },
     });
     if (!r.ok) throw new Error(`Fetch appointment failed: ${r.status}`);
     return r.json();
@@ -71,14 +78,21 @@ export default function ResultPage() {
 
   async function fetchPatientName(pid: string) {
     try {
+      const access_token = getCookie("access_token");
+
       const r = await fetch(`${API_BASE}/patients/${pid}`, {
-        cache: "no-store",
-        credentials: "include",
+        headers: {
+          Authorization: `Bearer ${access_token}`, // replace with your token variable
+        },
       });
       if (!r.ok) return setPatientName(pid);
       const p: Patient = await r.json();
       const n = p.user?.name ?? p.user_patient_idTouser?.name ?? p.name ?? "";
-      const l = p.user?.lastname ?? p.user_patient_idTouser?.lastname ?? p.lastname ?? "";
+      const l =
+        p.user?.lastname ??
+        p.user_patient_idTouser?.lastname ??
+        p.lastname ??
+        "";
       const full = [n, l].filter(Boolean).join(" ").trim();
       setPatientName(full || pid);
     } catch {
@@ -87,9 +101,12 @@ export default function ResultPage() {
   }
 
   async function fetchRecordByPair(did: string, pid: string) {
+    const access_token = getCookie("access_token");
+
     const r = await fetch(`${API_BASE}/medical_record/of/${did}/${pid}`, {
-      cache: "no-store",
-      credentials: "include",
+      headers: {
+        Authorization: `Bearer ${access_token}`, // replace with your token variable
+      },
     });
     if (r.status === 404) {
       setRecord(null);
@@ -116,16 +133,30 @@ export default function ResultPage() {
       const appt = await fetchAppointment(String(appointmentId));
       const did = appt.doctor_id ?? appt.doctor?.id;
       const pid = appt.patient_id ?? appt.patient?.id;
-      if (!did || !pid) throw new Error("Appointment missing doctor_id or patient_id");
+      if (!did || !pid)
+        throw new Error("Appointment missing doctor_id or patient_id");
 
       setDoctorId(did);
       setPatientId(pid);
 
       const d = appt.appoint_date ? new Date(appt.appoint_date) : null;
       setApptDate(
-        d ? d.toLocaleDateString("th-TH", { year: "numeric", month: "short", day: "2-digit" }) : "-"
+        d
+          ? d.toLocaleDateString("th-TH", {
+              year: "numeric",
+              month: "short",
+              day: "2-digit",
+            })
+          : "-"
       );
-      setApptTime(d ? d.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) : "-");
+      setApptTime(
+        d
+          ? d.toLocaleTimeString("th-TH", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : "-"
+      );
 
       // 2) ชื่อคนไข้
       await fetchPatientName(pid);
@@ -149,12 +180,20 @@ export default function ResultPage() {
     try {
       setSaving(true);
       setErr(null);
-      const r = await fetch(`${API_BASE}/medical_record/of/${doctorId}/${patientId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ diagnosis, notes }),
-      });
+      const access_token = getCookie("access_token");
+      console.log("diagnosis", diagnosis, " notes:", notes);
+      const r = await fetch(
+        `${API_BASE}/medical_record/of/${doctorId}/${patientId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${access_token}`, // replace with your token variable
+          },
+          credentials: "include",
+          body: JSON.stringify({ diagnosis, notes }),
+        }
+      );
       if (!r.ok) throw new Error(`Save failed: ${r.status}`);
       await fetchAll();
     } catch (e: any) {
@@ -171,7 +210,9 @@ export default function ResultPage() {
     return (
       <main className="mx-auto min-h-screen max-w-2xl bg-gray-50 px-4 py-6">
         <h1 className="text-xl font-semibold">Edit Medical Record</h1>
-        <div className="mt-4 rounded-2xl bg-white p-4 text-sm text-gray-600">กำลังโหลด…</div>
+        <div className="mt-4 rounded-2xl bg-white p-4 text-sm text-gray-600">
+          กำลังโหลด…
+        </div>
       </main>
     );
   }
@@ -265,7 +306,13 @@ export default function ResultPage() {
 }
 
 /* ---------------- helper components (หน้าตาเดียวกับหน้าแรก) ---------------- */
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
+function Card({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <section className="rounded-2xl bg-white p-4">
       <h2 className="text-sm font-medium text-gray-800">{title}</h2>

@@ -1,7 +1,9 @@
 import { DoctorProps } from "@/props/doctorInfo";
 import axios from "axios";
 import { start } from "repl";
-const api = axios.create({ baseURL: "http://localhost:9000/api" });
+import { getCookie } from "./authentication";
+// const api = axios.create({ baseURL: "http://localhost:9000/api" });
+export const api = axios.create({ baseURL: "http://localhost:4002/api" });
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("access_token"); // หรือ state/ctx ของคุณ
@@ -15,7 +17,7 @@ export const patientCreateAppointment = async (
   selectedTime: string
 ) => {
   try {
-    const res = await api.post("/appointment", {
+    const payload = {
       // patient_id,
       doctor_id: selectedDoctor?.id,
       appoint_date:
@@ -25,7 +27,18 @@ export const patientCreateAppointment = async (
         ":00:00.000Z",
       status: "PENDING",
       detail: "",
-    });
+    };
+    const access_token = getCookie("access_token");
+    const res = await axios.post(
+      "http://localhost:4002/api/appointment",
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
     // console.log("Response:", res.data);
   } catch (error) {
     console.log("Error on creating appointment:", error);
@@ -58,7 +71,7 @@ export const doctorCreateAppointment = async (
   time: string
 ) => {
   try {
-    const res = await api.post("/appointment", {
+    const payload = {
       patient_id,
       appoint_date:
         appoint_date +
@@ -67,7 +80,21 @@ export const doctorCreateAppointment = async (
         ":00:00.000Z",
       status: "CONFIRMED",
       detail,
+    };
+    const access_token = getCookie("access_token");
+    console.log("acces_tokenffff", access_token);
+    const res = await api.post("/appointment", payload, {
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+        "Content-Type": "application/json",
+      },
     });
+    // const res = await axios.post("http://localhost:4001/api/appointment", payload, {
+    //   headers: {
+    //     Authorization: `Bearer ${access_token}`,
+    //     "Content-Type": "application/json",
+    //   },
+    // });
     console.log("Response:", res.data);
   } catch (error) {
     console.log("Error on creating appointment(doctor):", error);

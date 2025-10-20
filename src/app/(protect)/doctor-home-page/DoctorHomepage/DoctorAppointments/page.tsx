@@ -1,7 +1,10 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import PatientAppointmentCard, { PatientAppointment } from "@/components/PatientAppointmentCard";
+import PatientAppointmentCard, {
+  PatientAppointment,
+} from "@/components/PatientAppointmentCard";
+import { getCookie } from "@/lib/authentication";
 
 type RawAppointment = {
   id: string;
@@ -10,7 +13,10 @@ type RawAppointment = {
   doctor?: { id: string; user?: { name?: string; lastname?: string } };
   patient?: {
     id: string;
-    user_patient_idTouser?: { name?: string; lastname?: string /* avatar_url?: string */ };
+    user_patient_idTouser?: {
+      name?: string;
+      lastname?: string /* avatar_url?: string */;
+    };
     // user_patient_hospital_numberTouser?: { ... } // ถ้าต้องใช้ในอนาคต
   };
 };
@@ -34,13 +40,17 @@ export default function DoctorAppointmentsPage() {
         if (!base) throw new Error("NEXT_PUBLIC_API_BASE is not set");
 
         const params = new URLSearchParams();
-        params.set("status", "scheduled");                 // ดึงเฉพาะนัดที่ยังไม่เสร็จ
-        params.set("dateFrom", new Date().toISOString());  // และต้องเป็นอนาคต
+        params.set("status", "scheduled"); // ดึงเฉพาะนัดที่ยังไม่เสร็จ
+        params.set("dateFrom", new Date().toISOString()); // และต้องเป็นอนาคต
         if (DOCTOR_ID) params.set("doctorId", DOCTOR_ID);
-
+          
+        const access_token = getCookie("access_token");
         const res = await fetch(`${base}/appointments?${params.toString()}`, {
           cache: "no-store",
           signal: ctrl.signal,
+          headers: {
+            Authorization: `Bearer ${access_token}`, // <-- your token variable here
+          },
         });
         if (!res.ok) throw new Error(`Fetch failed (${res.status})`);
 
@@ -48,18 +58,25 @@ export default function DoctorAppointmentsPage() {
 
         const mapped: PatientAppointment[] = data.map((a) => {
           const u = a.patient?.user_patient_idTouser;
-          const patientName = [u?.name, u?.lastname].filter(Boolean).join(" ") || "ไม่ทราบชื่อ";
+          const patientName =
+            [u?.name, u?.lastname].filter(Boolean).join(" ") || "ไม่ทราบชื่อ";
           const d = new Date(a.appoint_date);
 
           return {
             id: a.id,
             name: patientName,
             fullDate: d, // เก็บ date จริงไว้
-            date: d.toLocaleDateString("th-TH", { year: "numeric", month: "short", day: "2-digit" }),
-            time: d.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }),
+            date: d.toLocaleDateString("th-TH", {
+              year: "numeric",
+              month: "short",
+              day: "2-digit",
+            }),
+            time: d.toLocaleTimeString("th-TH", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
           };
         });
-
 
         setItems(mapped);
       } catch (e: any) {
@@ -97,8 +114,6 @@ export default function DoctorAppointmentsPage() {
     });
   }, [items, query, category]);
 
-
-
   function handleDelete(id: string) {
     setItems((prev) => prev.filter((x) => x.id !== id));
   }
@@ -109,7 +124,9 @@ export default function DoctorAppointmentsPage() {
 
       {/* Search */}
       <div className="mt-3 bg-white">
-        <label className="sr-only" htmlFor="search">ค้นหาชื่อคนไข้</label>
+        <label className="sr-only" htmlFor="search">
+          ค้นหาชื่อคนไข้
+        </label>
         <input
           id="search"
           value={query}
@@ -121,7 +138,9 @@ export default function DoctorAppointmentsPage() {
 
       {/* Category select (ยังไม่ใช้ตัวกรองจริง แต่คง UI ไว้ตามสไตล์เดิม) */}
       <div className="mt-3">
-        <label htmlFor="cat" className="mb-1 block text-sm text-gray-700">แสดงผล</label>
+        <label htmlFor="cat" className="mb-1 block text-sm text-gray-700">
+          แสดงผล
+        </label>
         <select
           id="cat"
           value={category}
@@ -133,7 +152,9 @@ export default function DoctorAppointmentsPage() {
         </select>
       </div>
 
-      <h2 className="mt-4 text-sm font-medium text-gray-800">Appointment {category}</h2>
+      <h2 className="mt-4 text-sm font-medium text-gray-800">
+        Appointment {category}
+      </h2>
 
       {loading ? (
         <p className="mt-3 text-sm text-gray-500">กำลังโหลด…</p>
@@ -144,7 +165,11 @@ export default function DoctorAppointmentsPage() {
       ) : (
         <div className="mt-3 grid gap-3 pb-20">
           {filtered.map((item) => (
-            <PatientAppointmentCard key={item.id} item={item} onDelete={handleDelete} />
+            <PatientAppointmentCard
+              key={item.id}
+              item={item}
+              onDelete={handleDelete}
+            />
           ))}
         </div>
       )}
