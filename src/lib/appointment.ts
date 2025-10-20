@@ -187,3 +187,27 @@ export const fetchDoctor = async (
     console.log("Error on fetching Doctor:", error);
   }
 };
+
+export const updateAppointmentStatus = async (
+  appointment_id: string,
+  status: "PENDING" | "CONFIRMED" | "CANCEL" | "COMPLETE"
+) => {
+  try {
+    const token = getCookie("access_token");
+    if (!appointment_id) {
+      console.log("No appointment_id found");
+      return;
+    }
+    const res = await api.patch(
+      `/${appointment_id}/status`,
+      { status },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`, // ถ้าใช้ JWT ใน localStorage
+        },
+      }
+    );
+  } catch (error) {
+    console.log("Error on updating appointment status:", error);
+  }
+};
