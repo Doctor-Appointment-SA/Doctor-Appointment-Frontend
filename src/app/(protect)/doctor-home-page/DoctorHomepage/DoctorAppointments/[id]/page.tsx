@@ -304,7 +304,7 @@ export default function AppointmentDetailPage() {
           <button
             onClick={() =>
               router.push(
-                `/DoctorHomepage/DoctorAppointments/${String(id)}/result`
+                `/doctor-home-page/DoctorHomepage/DoctorAppointments/${String(id)}/result`
               )
             }
             className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white hover:opacity-90"
