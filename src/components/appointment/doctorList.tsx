@@ -3,6 +3,8 @@ import DoctorListItem from "./doctorListItem";
 import { DoctorProps } from "@/props/doctorInfo";
 import axios from "axios";
 import { DoctorInputProps } from "@/props/DoctorProps";
+import { api } from "@/lib/appointment";
+import { getCookie } from "@/lib/authentication";
 
 interface Props {
   isDoctorListOpen: boolean;
@@ -21,8 +23,9 @@ const DoctorList = ({
 
   const fetchDoctor = async () => {
     try {
-      const token = localStorage.getItem("access_token");
-      const res = await axios.get("http://localhost:9000/api/doctor", {
+      const token = getCookie("access_token");
+      console.log("token", token);
+      const res = await api.get("/doctor", {
         headers: {
           Authorization: `Bearer ${token}`, // ถ้าใช้ JWT ใน localStorage
         },
