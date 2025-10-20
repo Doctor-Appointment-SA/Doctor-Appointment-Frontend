@@ -12,13 +12,12 @@ export type PatientDetails = {
   citizenId?: string;
   phone?: string;
   hospitalNumber?: string;
-  bloodDrawnAt?: string;    // ISO date
-  missedArvDays?: number;   // Int
-  notes?: string;           // symptom_note
-  lastUpdated?: string;     // ISO date
+  bloodDrawnAt?: string;
+  missedArvDays?: number;
+  notes?: string;
+  lastUpdated?: string;
 };
 
-/** ---------- Types ที่ตรง backend (ยืดหยุ่นต่อ alias) ---------- */
 type AppointmentAPI = {
   id: string;
   appoint_date: string | null;
@@ -38,6 +37,8 @@ type AppointmentAPI = {
     } | null;
   } | null;
   doctor?: { id: string } | null;
+  doctor_id?: string | null;
+  patient_id?: string | null;
 };
 
 type PatientAPI = {
@@ -52,6 +53,11 @@ type PatientAPI = {
     id_card?: string | null;
     phone?: string | null;
   } | null;
+};
+
+// 👇 เพิ่ม type สำหรับ medical record (เท่าที่ใช้)
+type MedicalRecord = {
+  notes?: string | null;
 };
 
 export default function AppointmentDetailPage() {
@@ -73,7 +79,7 @@ export default function AppointmentDetailPage() {
         const base = process.env.NEXT_PUBLIC_API_BASE;
         if (!base) throw new Error("NEXT_PUBLIC_API_BASE is not set");
 
-        // 1) ดึงนัดตาม id (ควร include patient.user_patient_idTouser)
+        // 1) ดึงนัด (เส้นทาง backend ของคุณเป็นพหูพจน์)
         const res = await fetch(`${base}/appointments/${id}`, {
           cache: "no-store",
           credentials: "include",
@@ -81,19 +87,26 @@ export default function AppointmentDetailPage() {
         if (!res.ok) throw new Error(`ไม่สามารถโหลดนัดได้ (${res.status})`);
         const appt: AppointmentAPI = await res.json();
 
-        // วัน-เวลาใบนัด
+        // วัน-เวลา
         const d = appt.appoint_date ? new Date(appt.appoint_date) : null;
         const date = d
           ? d.toLocaleDateString("th-TH", { year: "numeric", month: "short", day: "2-digit" })
           : "-";
-        const time = d ? d.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) : "-";
+        const time = d
+          ? d.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })
+          : "-";
 
-        // ชื่อ/เลขบัตร/เบอร์โทร จาก relation user
-        const u = appt.patient?.user_patient_idTouser;
+        // ชื่อจาก relation user
+        const u =
+          (appt.patient as any)?.user ??
+          (appt.patient as any)?.user_patient_idTouser;
         const patientName =
-          [u?.name, u?.lastname].filter(Boolean).join(" ").trim() || "ไม่ทราบชื่อ";
+          [u?.name, u?.lastname].filter(Boolean).join(" ").trim() ||
+          appt.patient?.id ||
+          appt.patient?.hospital_number ||
+          "ไม่ทราบชื่อ";
 
-        // 2) (ออปชัน) ดึง patient เพิ่ม ถ้ามี endpoint แยก
+        // 2) (ออปชัน) ดึง patient เพิ่ม
         let patientExtra: PatientAPI | null = null;
         if (appt.patient?.id) {
           try {
@@ -102,12 +115,28 @@ export default function AppointmentDetailPage() {
               credentials: "include",
             });
             if (pr.ok) patientExtra = await pr.json();
-          } catch {
-            /* เงียบ ๆ */
-          }
+          } catch {}
         }
 
-        // 3) รวมข้อมูลตาม schema จริง
+        // 3) 👉 ดึง Medical Record ของคู่ (doctor_id, patient_id) เพื่อนำ notes มาโชว์
+        const doctorId = appt.doctor_id ?? appt.doctor?.id;
+        const patientId = appt.patient_id ?? appt.patient?.id;
+        let notesFromMedicalRecord: string | undefined;
+
+        if (doctorId && patientId) {
+          try {
+            const mr = await fetch(`${base}/medical_record/of/${doctorId}/${patientId}`, {
+              cache: "no-store",
+              credentials: "include",
+            });
+            if (mr.ok) {
+              const rec: MedicalRecord = await mr.json();
+              notesFromMedicalRecord = rec.notes ?? undefined;
+            }
+          } catch {}
+        }
+
+        // รวมข้อมูล
         const merged = {
           hospital_number:
             appt.patient?.hospital_number ?? patientExtra?.hospital_number ?? undefined,
@@ -125,18 +154,19 @@ export default function AppointmentDetailPage() {
           },
         };
 
+        //  บันทึกอาการ: ใช้ notes ของ Medical Record ก่อน ถ้าไม่มีค่อย fallback
         const mapped: PatientDetails = {
           id: appt.patient?.id || "unknown",
           name: patientName,
           appointment: { date, time },
-          profilePic: undefined, // ไม่มีฟิลด์รูปใน schema → ใช้ placeholder หากต้องการ
+          profilePic: undefined,
           citizenId: merged.user.id_card || "-",
           phone: merged.user.phone || "-",
           hospitalNumber: merged.hospital_number || "-",
           bloodDrawnAt: merged.blood_drawn_at || undefined,
           missedArvDays:
             typeof merged.missed_arv_days === "number" ? merged.missed_arv_days : undefined,
-          notes: merged.symptom_note ?? appt.detail ?? undefined,
+          notes: notesFromMedicalRecord ?? merged.symptom_note ?? appt.detail ?? undefined,
           lastUpdated: new Date().toISOString(),
         };
 
@@ -184,7 +214,6 @@ export default function AppointmentDetailPage() {
             />
           </section>
 
-          {/* Read-only details: เฉพาะฟิลด์ที่มีใน schema */}
           <section className="mt-4 grid gap-4">
             <Card title="ข้อมูลทั่วไป">
               <Row label="เลขบัตรประชาชน" value={data.citizenId || "-"} />
@@ -221,7 +250,7 @@ export default function AppointmentDetailPage() {
         </>
       )}
 
-      {/* Bottom actions (อยู่ในกล่องเทา) */}
+      {/* Bottom actions */}
       <div className="sticky bottom-0 mt-6 flex items-center justify-between rounded-2xl bg-white/90 p-4 shadow-[0_-6px_12px_-6px_rgba(0,0,0,0.08)] backdrop-blur">
         <button
           onClick={() => router.back()}
@@ -231,9 +260,7 @@ export default function AppointmentDetailPage() {
         </button>
         {data && (
           <button
-            onClick={() =>
-              router.push(`/DoctorHomepage/DoctorAppointments/${String(id)}/result`)
-            }
+            onClick={() => router.push(`/DoctorHomepage/DoctorAppointments/${String(id)}/result`)}
             className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white hover:opacity-90"
           >
             Next
