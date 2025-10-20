@@ -3,6 +3,7 @@ import React from "react";
 import Link from "next/link";
 
 export type PatientAppointment = {
+  fullDate: string | number | Date;
   id: string;
   name: string;
   date: string;

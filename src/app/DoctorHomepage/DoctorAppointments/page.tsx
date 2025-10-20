@@ -50,18 +50,16 @@ export default function DoctorAppointmentsPage() {
           const u = a.patient?.user_patient_idTouser;
           const patientName = [u?.name, u?.lastname].filter(Boolean).join(" ") || "ไม่ทราบชื่อ";
           const d = new Date(a.appoint_date);
-          const date = d.toLocaleDateString("th-TH", { year: "numeric", month: "short", day: "2-digit" });
-          const time = d.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
 
           return {
             id: a.id,
             name: patientName,
-            date,
-            time,
-            // ถ้าจะใช้รูปจริง: เพิ่ม prop ใน PatientAppointment และในการ์ด แล้วแม็พจาก u?.avatar_url
-            // profilePic: u?.avatar_url ?? "https://i.pravatar.cc/80?img=5",
+            fullDate: d, // เก็บ date จริงไว้
+            date: d.toLocaleDateString("th-TH", { year: "numeric", month: "short", day: "2-digit" }),
+            time: d.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }),
           };
         });
+
 
         setItems(mapped);
       } catch (e: any) {
@@ -78,8 +76,28 @@ export default function DoctorAppointmentsPage() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return items.filter((it) => (q ? it.name.toLowerCase().includes(q) : true));
-  }, [items, query]);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return items.filter((it) => {
+      const d = new Date(it.fullDate);
+      d.setHours(0, 0, 0, 0);
+
+      const sameDay =
+        d.getDate() === today.getDate() &&
+        d.getMonth() === today.getMonth() &&
+        d.getFullYear() === today.getFullYear();
+
+      const inFutureOrToday = d.getTime() >= today.getTime();
+
+      const matchSearch = q ? it.name.toLowerCase().includes(q) : true;
+      if (category === "วันนี้") return matchSearch && sameDay;
+      if (category === "ทั้งหมด") return matchSearch && inFutureOrToday;
+      return matchSearch;
+    });
+  }, [items, query, category]);
+
+
 
   function handleDelete(id: string) {
     setItems((prev) => prev.filter((x) => x.id !== id));
@@ -103,14 +121,14 @@ export default function DoctorAppointmentsPage() {
 
       {/* Category select (ยังไม่ใช้ตัวกรองจริง แต่คง UI ไว้ตามสไตล์เดิม) */}
       <div className="mt-3">
-        <label htmlFor="cat" className="mb-1 block text-sm text-gray-700">ประเภทคนไข้</label>
+        <label htmlFor="cat" className="mb-1 block text-sm text-gray-700">แสดงผล</label>
         <select
           id="cat"
           value={category}
           onChange={(e) => setCategory(e.target.value)}
           className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="คนไข้">คนไข้</option>
+          <option value="วันนี้">วันนี้</option>
           <option value="ทั้งหมด">ทั้งหมด</option>
         </select>
       </div>
