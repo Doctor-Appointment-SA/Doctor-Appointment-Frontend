@@ -5,7 +5,7 @@ import { getCookie } from "./authentication";
 export async function PrescriptionItem(prescription_id: string) {
   try {
     const { data } = await axios.get(
-      `http://localhost:4005/api/payments/prescription/${prescription_id}`
+      `${process.env.NEXT_PUBLIC_API_URL}/api/payments/prescription/${prescription_id}`
     );
     // const data = await api.get(`/payment/${payment_id}`);
     return data;
@@ -27,7 +27,7 @@ export async function CreatePayment(
     };
     const access_token = getCookie("access_token");
     const { data } = await axios.post(
-      `http://localhost:4005/api/payments/create`,
+      `${process.env.NEXT_PUBLIC_API_URL}/api/payments/create`,
       payload,
       {
         headers: {
@@ -51,7 +51,7 @@ export async function ConfirmPayment(
     const payload = { delivery: delivery, location: location };
     const access_token = getCookie("access_token");
     const { data } = await axios.patch(
-      `http://localhost:4005/api/payments/pay/${payment_id}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/api/payments/pay/${payment_id}`,
       payload,
       {
         headers: {
@@ -77,7 +77,7 @@ export async function ConfirmPayment(
 export async function CancelPayment(payment_id: string) {
   try {
     const { data } = await axios.delete(
-      `http://localhost:4005/api/payments/${payment_id}`
+      `${process.env.NEXT_PUBLIC_API_URL}/api/payments/${payment_id}`
     );
     return data;
   } catch (e) {
@@ -91,7 +91,7 @@ export function FetchTrackingInfo(
 ) {
   try {
     const eventSource = new EventSource(
-      `http://localhost:4005/api/tracking/stream/${tracking_id}`
+      `${process.env.NEXT_PUBLIC_API_URL}/api/tracking/stream/${tracking_id}`
     );
 
     eventSource.onmessage = (e) => {
@@ -122,7 +122,7 @@ export function IsPaymentExpired(
 ) {
   try {
     const eventSource = new EventSource(
-      `http://localhost:4005/api/payments/stream/${payment_id}`
+      `${process.env.NEXT_PUBLIC_API_URL}/api/payments/stream/${payment_id}`
     );
 
     eventSource.onmessage = (e) => {

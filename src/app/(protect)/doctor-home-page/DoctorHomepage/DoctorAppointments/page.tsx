@@ -36,8 +36,8 @@ export default function DoctorAppointmentsPage() {
     const ctrl = new AbortController();
     (async () => {
       try {
-        const base = process.env.NEXT_PUBLIC_API_BASE;
-        if (!base) throw new Error("NEXT_PUBLIC_API_BASE is not set");
+        const base = process.env.NEXT_PUBLIC_API_URL_PRO;
+        if (!base) throw new Error("NEXT_PUBLIC_API_URL_PRO is not set");
 
         const params = new URLSearchParams();
         params.set("status", "scheduled"); // ดึงเฉพาะนัดที่ยังไม่เสร็จ

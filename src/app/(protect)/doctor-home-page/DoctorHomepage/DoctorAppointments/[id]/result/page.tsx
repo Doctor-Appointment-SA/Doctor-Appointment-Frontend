@@ -6,7 +6,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getCookie } from "@/lib/authentication";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL_PRO || "http://localhost:3001";
 
 /* ---------- Types ---------- */
 type Appointment = {

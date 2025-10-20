@@ -81,8 +81,8 @@ export default function DoctorHomepage() {
       setErr(null);
 
       try {
-        const base = process.env.NEXT_PUBLIC_API_BASE;
-        if (!base) throw new Error("NEXT_PUBLIC_API_BASE is not set");
+        const base = process.env.NEXT_PUBLIC_API_URL_PRO;
+        if (!base) throw new Error("NEXT_PUBLIC_API_URL_PRO is not set");
 
         // 1) หา doctorId
         // const id = await resolveDoctorId(base);
@@ -94,7 +94,7 @@ export default function DoctorHomepage() {
         // 2) ดึงชื่อหมอ
         if (id) {
           try {
-            const res = await fetch(`${base}/doctor/${id}`, {
+            const res = await fetch(`${base}/api/doctor/${id}`, {
               cache: "no-store",
               credentials: "include",
             });
@@ -126,14 +126,8 @@ export default function DoctorHomepage() {
         if (id) qsPending.set("doctorId", id);
 
         const [resC, resP] = await Promise.all([
-          fetch(`${base}/appointments?${qsConfirmed.toString()}`, {
-            cache: "no-store",
-            credentials: "include",
-          }),
-          fetch(`${base}/appointments?${qsPending.toString()}`, {
-            cache: "no-store",
-            credentials: "include",
-          }),
+          fetch(`${base}/appointments?${qsConfirmed.toString()}`),
+          fetch(`${base}/appointments?${qsPending.toString()}`),
         ]);
 
         if (!resC.ok)
