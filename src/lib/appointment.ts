@@ -1,12 +1,13 @@
 import { DoctorProps } from "@/props/doctorInfo";
 import axios from "axios";
-import { start } from "repl";
 import { getCookie } from "./authentication";
-// const api = axios.create({ baseURL: "http://localhost:9000/api" });
-export const api = axios.create({ baseURL: "http://localhost:4002/api" });
+import { Dispatch, SetStateAction } from "react";
+import { DoctorInputProps } from "@/props/DoctorProps";
+const api = axios.create({ baseURL: "http://localhost:9000/api/appt" });
+// export const api = axios.create({ baseURL: "http://localhost:4002/api" });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("access_token"); // หรือ state/ctx ของคุณ
+  const token = getCookie("access_token"); // หรือ state/ctx ของคุณ
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
@@ -29,16 +30,12 @@ export const patientCreateAppointment = async (
       detail: "",
     };
     const access_token = getCookie("access_token");
-    const res = await axios.post(
-      "http://localhost:4002/api/appointment",
-      payload,
-      {
-        headers: {
-          Authorization: `Bearer ${access_token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    const res = await api.post("", payload, {
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+        "Content-Type": "application/json",
+      },
+    });
     // console.log("Response:", res.data);
   } catch (error) {
     console.log("Error on creating appointment:", error);
@@ -47,7 +44,7 @@ export const patientCreateAppointment = async (
 
 export const getDoctorAppointments = async (status?: string) => {
   try {
-    const res = await api.get(`/appointment/doctor/me?status=${status}`);
+    const res = await api.get(`/doctor/me?status=${status}`);
     console.log(res.data);
     return res.data;
   } catch (error) {
@@ -57,7 +54,9 @@ export const getDoctorAppointments = async (status?: string) => {
 
 export const getPatientData = async (patient_id: string) => {
   try {
-    const res = await api.get(`/users/${patient_id}`);
+    const res = await axios.get(
+      `http://localhost:9000/api/users/${patient_id}`
+    );
     return res.data;
   } catch (error) {
     console.log("Error on fetching patient data:", error);
@@ -83,7 +82,7 @@ export const doctorCreateAppointment = async (
     };
     const access_token = getCookie("access_token");
     console.log("acces_tokenffff", access_token);
-    const res = await api.post("/appointment", payload, {
+    const res = await api.post("", payload, {
       headers: {
         Authorization: `Bearer ${access_token}`,
         "Content-Type": "application/json",
@@ -106,7 +105,7 @@ export const updateAppointmentDetail = async (
   detail: string
 ) => {
   try {
-    const res = await api.patch(`/appointment/${appointment_id}`, {
+    const res = await api.patch(`/${appointment_id}/detail`, {
       detail,
     });
     console.log("Update Response:", res.data);
@@ -164,10 +163,27 @@ export const getDoctorScheduleOnDate = async (
 ) => {
   try {
     const res = await api.get(
-      `appointment/doctor/${doctor_id}?status=CONFIRMED&date=${date}`
+      `/doctor/${doctor_id}?status=CONFIRMED&date=${date}`
     );
     return res.data;
   } catch (error) {
     console.log("Error on fetching doctor's schedule:", error);
+  }
+};
+
+export const fetchDoctor = async (
+  setDoctorList: Dispatch<SetStateAction<DoctorInputProps[]>>
+) => {
+  try {
+    const token = getCookie("access_token");
+    console.log("token", token);
+    const res = await api.get("/doctor", {
+      headers: {
+        Authorization: `Bearer ${token}`, // ถ้าใช้ JWT ใน localStorage
+      },
+    });
+    setDoctorList(res.data);
+  } catch (error) {
+    console.log("Error on fetching Doctor:", error);
   }
 };

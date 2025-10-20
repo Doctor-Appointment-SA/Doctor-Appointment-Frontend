@@ -3,7 +3,7 @@ import DoctorListItem from "./doctorListItem";
 import { DoctorProps } from "@/props/doctorInfo";
 import axios from "axios";
 import { DoctorInputProps } from "@/props/DoctorProps";
-import { api } from "@/lib/appointment";
+import { fetchDoctor } from "@/lib/appointment";
 import { getCookie } from "@/lib/authentication";
 
 interface Props {
@@ -21,23 +21,8 @@ const DoctorList = ({
 }: Props) => {
   const [doctorList, setDoctorList] = useState<DoctorInputProps[]>([]);
 
-  const fetchDoctor = async () => {
-    try {
-      const token = getCookie("access_token");
-      console.log("token", token);
-      const res = await api.get("/doctor", {
-        headers: {
-          Authorization: `Bearer ${token}`, // ถ้าใช้ JWT ใน localStorage
-        },
-      });
-      setDoctorList(res.data);
-    } catch (error) {
-      console.log("Error on fetching Doctor:", error);
-    }
-  };
-
   useEffect(() => {
-    fetchDoctor();
+    fetchDoctor(setDoctorList);
   }, []);
 
   return (
