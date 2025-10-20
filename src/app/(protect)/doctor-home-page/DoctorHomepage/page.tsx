@@ -164,7 +164,6 @@ export default function DoctorHomepage() {
           count={loading ? undefined : countConfirmed ?? 0}
           avatar="👩‍⚕️"
           href={`/doctor-home-page/DoctorHomepage/DoctorAppointments?status=CONFIRMED${
-          href={`/doctor-home-page/DoctorHomepage/DoctorAppointments?status=CONFIRMED${
             doctorId ? `&doctorId=${doctorId}` : ""
           }`}
         />
@@ -179,7 +178,6 @@ export default function DoctorHomepage() {
           title="นัดที่ยังไม่ยืนยัน"
           count={loading ? undefined : countPending ?? 0}
           avatar="👩‍⚕️"
-          href={`/doctor-home-page/DoctorHomepage/DoctorAppointments?status=PENDING${
           href={`/doctor-home-page/DoctorHomepage/DoctorAppointments?status=PENDING${
             doctorId ? `&doctorId=${doctorId}` : ""
           }`}
