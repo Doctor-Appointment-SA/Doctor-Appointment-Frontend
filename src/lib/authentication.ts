@@ -12,7 +12,7 @@ import axios from "axios";
 export async function Login(payload: { username: string; password: string }) {
   try {
     const res = await axios.post<LoginResponse>(
-      `${process.env.NEXT_PUBLIC_AUTH_URL}/api/auth/login`,
+      `${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`,
       payload,
       { withCredentials: true }
     );
@@ -34,7 +34,7 @@ export async function Register(payload: {
 }) {
   try {
     const res = await axios.post<RegisterResponse>(
-      `${process.env.NEXT_PUBLIC_AUTH_URL}/api/auth/register`,
+      `${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`,
       payload,
       { withCredentials: true }
     );
@@ -52,7 +52,7 @@ export async function whoami() {
     console.log("get access_token:", access_token);
 
     const res = await axios.get<UserPayload>(
-      `${process.env.NEXT_PUBLIC_AUTH_URL}/api/auth/whoami`,
+      `${process.env.NEXT_PUBLIC_API_URL}/api/auth/whoami`,
       { headers: { Authorization: `Bearer ${access_token}` } }
     );
     const data = res.data;
@@ -66,7 +66,7 @@ export async function whoami() {
 export async function refreshToken() {
   try {
     const res = await axios.post(
-      `${process.env.NEXT_PUBLIC_AUTH_URL}/api/auth/refresh`,
+      `${process.env.NEXT_PUBLIC_API_URL}/api/auth/refresh`,
       {}, // second argument is payload, not credential
       { withCredentials: true }
     ); // withCredentials tell browser to accept cookie header in response

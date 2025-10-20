@@ -1,6 +1,5 @@
 import { DoctorProps } from "@/props/doctorInfo";
 import axios from "axios";
-import { start } from "repl";
 import { getCookie } from "./authentication";
 import { Dispatch, SetStateAction } from "react";
 import { DoctorInputProps } from "@/props/DoctorProps";
@@ -8,7 +7,7 @@ const api = axios.create({ baseURL: "http://localhost:9000/api/appt" });
 // export const api = axios.create({ baseURL: "http://localhost:4002/api" });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("access_token"); // หรือ state/ctx ของคุณ
+  const token = getCookie("access_token"); // หรือ state/ctx ของคุณ
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
