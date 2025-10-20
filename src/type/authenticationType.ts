@@ -9,6 +9,7 @@ export type LoginPayload = {
 };
 
 export type LoginResponse = {
+  user: UserPayload;
   access_token: string;
 };
 

@@ -2,18 +2,38 @@
 import { LoginForm } from "@/components/authen/LoginForm";
 import { RegisterForm } from "@/components/authen/RegisterForm";
 import React, { useEffect, useState } from "react";
-import { getCookie, Login, refreshToken, Register, setCookie, whoami } from "@/lib/authentication";
-import { AuthTab, LoginPayload, RegisterPayload } from "@/type/authenticationType";
+import {
+  Login,
+  Register,
+  setCookie,
+  whoami,
+} from "@/lib/authentication";
+import {
+  AuthTab,
+  LoginPayload,
+  RegisterPayload,
+} from "@/type/authenticationType";
+import { useRouter } from "next/navigation";
 
 const Authentication = () => {
   const [activeTab, setActiveTab] = useState<AuthTab>(AuthTab.LOGIN);
+  const router = useRouter();
+
+  const RedirectOnRole = (role:string) => {
+    if (role === "doctor") router.push('/doctor-home-page/DoctorHomepage');
+    else if (role === "patient") router.push('patient-home-page');
+  }
 
   const handleLoginSubmit = async (payload: LoginPayload) => {
-    console.log(`${AuthTab.LOGIN} form submitted:`, payload);
-    const data = await Login(payload);
+    try {
+      console.log(`${AuthTab.LOGIN} form submitted:`, payload);
+      const data = await Login(payload);
+      const user_role = data.user.role;
 
-    console.log("data acc", data.access_token)
-    setCookie("access_token", data.access_token);
+      console.log("data acc", data.access_token);
+      setCookie("access_token", data.access_token);
+      RedirectOnRole(user_role);      
+    } catch (e) {}
   };
 
   const handleRegisterSubmit = async (payload: RegisterPayload) => {
@@ -22,21 +42,6 @@ const Authentication = () => {
 
     setCookie("access_token", data.access_token);
   };
-
-  // const whoamiTEMP = async () => {
-  //   const w = await whoami();
-  //   return w;
-  // }
-
-  // const refreshTEMP = async () => {
-  //   const re = await refreshToken();
-  //   return re;
-  // }
-
-  // useEffect(()=>{
-  //   whoamiTEMP();
-  //   // refreshTEMP();
-  // }, [])
 
   return (
     <main className="flex p-8 justify-center">
@@ -79,7 +84,6 @@ const Authentication = () => {
             )}
           </div>
         </div>
-
       </div>
     </main>
   );
