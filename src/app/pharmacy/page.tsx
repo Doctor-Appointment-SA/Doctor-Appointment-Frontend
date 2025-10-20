@@ -16,13 +16,11 @@ type CartItem = { medicine: Medicine; qty: number; note?: string };
 
 /* ========= API ========= */
 // src/app/pharmacy/page.tsx
-const API_BASE =  "http://localhost:3001/api";
 const API = {
-  context: `${API_BASE}/pharmacy/context`,
-  medicines: `${API_BASE}/pharmacy/medicines`,
-  createPrescription: `${API_BASE}/pharmacy/prescriptions`,
+  context: `${process.env.NEXT_PUBLIC_API_URL_PHA}/pharmacy/context`,
+  medicines: `${process.env.NEXT_PUBLIC_API_URL_PHA}/pharmacy/medicines`,
+  createPrescription: `${process.env.NEXT_PUBLIC_API_URL_PHA}/pharmacy/prescriptions`,
 };
-
 
 export default function PharmacyPage() {
   /* IDs from backend (read-only) */

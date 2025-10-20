@@ -1,6 +1,7 @@
 "use client";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import SuspenseHelper from "@/components/SuspenseHelper";
 
 export default function PrescriptionIndex() {
   const router = useRouter();
@@ -12,12 +13,16 @@ export default function PrescriptionIndex() {
   }, [id, router]);
 
   return (
-    <div className="p-6">
-      <h1 className="text-xl font-semibold mb-2">Prescription Viewer</h1>
-      <p className="text-sm text-gray-600">
-        Go to <code>/prescription/&lt;id&gt;</code> (prescription or patient id), or pass{" "}
-        <code>?id=&lt;id&gt;</code>.
-      </p>
-    </div>
+    <SuspenseHelper>
+      (
+      <div className="p-6">
+        <h1 className="text-xl font-semibold mb-2">Prescription Viewer</h1>
+        <p className="text-sm text-gray-600">
+          Go to <code>/prescription/&lt;id&gt;</code> (prescription or patient
+          id), or pass <code>?id=&lt;id&gt;</code>.
+        </p>
+      </div>
+      )
+    </SuspenseHelper>
   );
 }

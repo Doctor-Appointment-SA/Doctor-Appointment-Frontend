@@ -4,7 +4,7 @@ import React, { useMemo, useState } from "react";
 import axios from "axios";
 
 /** Adjust this to your backend */
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL_PHA;
 const API = {
   submit: `${API_BASE}/screening`, // POST
 };

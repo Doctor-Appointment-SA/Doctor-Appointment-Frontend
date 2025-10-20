@@ -54,33 +54,51 @@ type Medicine = {
   price?: number;
 };
 type RxItem = { medicine_id: string; qty: number; note?: string };
+type UiRxItemView = {
+    medicine_id: string;
+    qty: number;
+    // enriched (if medication is included)
+    name?: string;
+    strength?: string;
+    form?: string; // medication.description
+    unit?: string;
+    price?: number;
+};
 type Rx = {
   id: string;
   doctor_id: string;
   patient_id: string;
+
+  // NEW for header/identity
+  doctor_name?: string;
+  doctor_lastname?: string;
+  patient_name?: string;
+  patient_lastname?: string;
+  patient_username?: string;
+
   note?: string;
-  items: RxItem[];
-  status?: "ready" | "awaiting_payment" | "paid" | "cancelled" | string;
-  total?: number;
+  status: string;
+  total: number;
   createdAt?: string;
+  items: UiRxItemView[];
 };
 
 /* ========= API ========= */
-const RAW = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-const API_BASE =
-  (RAW.endsWith("/api") ? RAW : `${RAW.replace(/\/$/, "")}/api`).replace(/\/+$/, "/api");
-
 const API = {
   // only patient flow for fetching:
   latestByPatient: (patientId: string) =>
-    `${API_BASE}/pharmacy/patients/${encodeURIComponent(patientId)}/prescriptions/latest`,
+    `${
+      process.env.NEXT_PUBLIC_API_URL_PHA
+    }/pharmacy/patients/${encodeURIComponent(patientId)}/prescriptions/latest`,
 
   // still needed for status updates (uses rx.id returned from latestByPatient)
   rxStatus: (rxId: string) =>
-    `${API_BASE}/pharmacy/prescriptions/${encodeURIComponent(rxId)}/status`,
+    `${
+      process.env.NEXT_PUBLIC_API_URL_PHA
+    }/pharmacy/prescriptions/${encodeURIComponent(rxId)}/status`,
 
   // used to enrich (name/strength/price) for display
-  meds: `${API_BASE}/pharmacy/medicines`,
+  meds: `${process.env.NEXT_PUBLIC_API_URL_PHA}/pharmacy/medicines`,
 };
 
 /* ========= HELPERS ========= */
@@ -92,7 +110,9 @@ const normalizeStatus = (s?: string) => {
 
 // UUID v4-ish check (len 36 and hex+hyphens). Adjust if your IDs differ.
 const isUuidLike = (v: string) =>
-  /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/.test(v);
+  /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/.test(
+    v
+  );
 
 export default function PrescriptionDetail({
   params,
@@ -210,8 +230,8 @@ export default function PrescriptionDetail({
         status === "awaiting_payment"
           ? "สั่งซื้อเรียบร้อย กำลังรอการชำระเงิน ✅"
           : status === "paid"
-            ? "ชำระเงินสำเร็จ ✅"
-            : "อัปเดตสถานะแล้ว"
+          ? "ชำระเงินสำเร็จ ✅"
+          : "อัปเดตสถานะแล้ว"
       );
     } catch (e: any) {
       setMsg(e?.response?.data?.message ?? "อัปเดตสถานะไม่สำเร็จ");
@@ -275,22 +295,32 @@ export default function PrescriptionDetail({
             {/* Names instead of IDs */}
             <div className="grid grid-cols-2 gap-2">
               <div className="bg-white rounded-xl border px-3 py-2">
-                <label className="block text-[11px]" style={{ color: "var(--muted)" }}>
+                <label
+                  className="block text-[11px]"
+                  style={{ color: "var(--muted)" }}
+                >
                   Doctor
                 </label>
                 <div className="text-sm font-medium">
                   {rx?.doctor_name || rx?.doctor_lastname
-                    ? `${rx?.doctor_name ?? ""} ${rx?.doctor_lastname ?? ""}`.trim()
+                    ? `${rx?.doctor_name ?? ""} ${
+                        rx?.doctor_lastname ?? ""
+                      }`.trim()
                     : "—"}
                 </div>
               </div>
               <div className="bg-white rounded-xl border px-3 py-2">
-                <label className="block text-[11px]" style={{ color: "var(--muted)" }}>
+                <label
+                  className="block text-[11px]"
+                  style={{ color: "var(--muted)" }}
+                >
                   Patient
                 </label>
                 <div className="text-sm font-medium">
                   {rx?.patient_name || rx?.patient_lastname
-                    ? `${rx?.patient_name ?? ""} ${rx?.patient_lastname ?? ""}`.trim()
+                    ? `${rx?.patient_name ?? ""} ${
+                        rx?.patient_lastname ?? ""
+                      }`.trim()
                     : "—"}
                 </div>
               </div>
@@ -356,7 +386,10 @@ export default function PrescriptionDetail({
                         <div className="text-right shrink-0">
                           <p className="text-sm">× {it.qty}</p>
                           {typeof m?.price === "number" ? (
-                            <p className="text-xs" style={{ color: "var(--muted)" }}>
+                            <p
+                              className="text-xs"
+                              style={{ color: "var(--muted)" }}
+                            >
                               {(m.price ?? 0) * it.qty} บาท
                             </p>
                           ) : null}
