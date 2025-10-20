@@ -1,56 +1,95 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import PatientAppointmentCard, {
   PatientAppointment,
 } from "@/components/PatientAppointmentCard";
 import { getCookie } from "@/lib/authentication";
+import { useAuth } from "@/components/authen/AuthProvider";
 
 type RawAppointment = {
   id: string;
-  appoint_date: string; // ISO datetime
+  appoint_date: string;
   status?: string;
   doctor?: { id: string; user?: { name?: string; lastname?: string } };
   patient?: {
     id: string;
     user_patient_idTouser?: {
       name?: string;
-      lastname?: string /* avatar_url?: string */;
+      lastname?: string;
     };
-    // user_patient_hospital_numberTouser?: { ... } // ถ้าต้องใช้ในอนาคต
   };
 };
 
+function startOfTodayLocalISO() {
+  return new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
+}
+
 export default function DoctorAppointmentsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { user } = useAuth();
+
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("คนไข้");
+  const [category, setCategory] = useState<"วันนี้" | "ทั้งหมด">("คนไข้" as any); // คง UI เดิม; filter ใช้จริงด้านล่าง
   const [items, setItems] = useState<PatientAppointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
-  // ถ้ารู้ doctorId ของหมอที่ล็อกอิน ให้ใส่เพื่อกรองเฉพาะนัดของหมอคนนั้นได้ (ดึงจาก auth/context ก็ได้)
-  const DOCTOR_ID: string | undefined = undefined;
-
   useEffect(() => {
     const ctrl = new AbortController();
     (async () => {
+      setErr(null);
+      setLoading(true);
+      setItems([]); // กันค้างรายการของหมอเก่า
+
       try {
         const base = process.env.NEXT_PUBLIC_API_URL_PRO;
         if (!base) throw new Error("NEXT_PUBLIC_API_URL_PRO is not set");
 
-        const params = new URLSearchParams();
-        params.set("status", "scheduled"); // ดึงเฉพาะนัดที่ยังไม่เสร็จ
-        params.set("dateFrom", new Date().toISOString()); // และต้องเป็นอนาคต
-        if (DOCTOR_ID) params.set("doctorId", DOCTOR_ID);
-          
+        // read token inside effect
         const access_token = getCookie("access_token");
+
+        // 1) หา doctorId ปัจจุบัน: ?doctorId -> user.id -> /doctor/me
+        let doctorId: string | undefined =
+          (searchParams.get("doctorId") || undefined) ??
+          (user?.id || undefined);
+
+        if (!doctorId) {
+          const me = await fetch(`${base}/doctor/me`, {
+            credentials: "include",
+            headers: access_token
+              ? { Authorization: `Bearer ${access_token}` }
+              : {},
+            signal: ctrl.signal,
+            cache: "no-store",
+          });
+          if (me.ok) {
+            const j = await me.json();
+            if (j?.id) doctorId = j.id;
+          }
+        }
+
+        // 2) query params
+        const params = new URLSearchParams();
+        const dateFrom = startOfTodayLocalISO(); // รวมทั้งวันของวันนี้เป็นต้นไป
+        params.set("dateFrom", dateFrom);
+        if (doctorId) params.set("doctorId", doctorId);
+
+        // ถ้ามี status ใน URL ให้ส่งตามนั้น (เช่น CONFIRMED/PENDING)
+        const statusParam = searchParams.get("status");
+        if (statusParam) params.set("status", statusParam.toUpperCase());
+
+        // เผื่อ BE มีหน้า/จำนวน ให้ขอดึงเยอะหน่อย
+        params.set("take", "9999");
+        params.set("_ts", String(Date.now())); // กัน cache
+
         const res = await fetch(`${base}/appointments?${params.toString()}`, {
           cache: "no-store",
           signal: ctrl.signal,
-          headers: {
-            Authorization: `Bearer ${access_token}`, // <-- your token variable here
-          },
+          headers: access_token
+            ? { Authorization: `Bearer ${access_token}` }
+            : {},
         });
         if (!res.ok) throw new Error(`Fetch failed (${res.status})`);
 
@@ -58,22 +97,23 @@ export default function DoctorAppointmentsPage() {
 
         const mapped: PatientAppointment[] = data.map((a) => {
           const u = a.patient?.user_patient_idTouser;
-          const patientName =
-            [u?.name, u?.lastname].filter(Boolean).join(" ") || "ไม่ทราบชื่อ";
-          const d = new Date(a.appoint_date);
+          const name = [u?.name, u?.lastname].filter(Boolean).join(" ") || "ไม่ทราบชื่อ";
 
+          const d = new Date(a.appoint_date);
           return {
             id: a.id,
-            name: patientName,
-            fullDate: d, // เก็บ date จริงไว้
+            name,
+            fullDate: d,
             date: d.toLocaleDateString("th-TH", {
               year: "numeric",
               month: "short",
               day: "2-digit",
+              timeZone: "UTC",
             }),
             time: d.toLocaleTimeString("th-TH", {
               hour: "2-digit",
               minute: "2-digit",
+              timeZone: "UTC",
             }),
           };
         });
@@ -89,7 +129,7 @@ export default function DoctorAppointmentsPage() {
       }
     })();
     return () => ctrl.abort();
-  }, [DOCTOR_ID]);
+  }, [user?.id, searchParams]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -136,7 +176,7 @@ export default function DoctorAppointmentsPage() {
         />
       </div>
 
-      {/* Category select (ยังไม่ใช้ตัวกรองจริง แต่คง UI ไว้ตามสไตล์เดิม) */}
+      {/* Category */}
       <div className="mt-3">
         <label htmlFor="cat" className="mb-1 block text-sm text-gray-700">
           แสดงผล
@@ -144,11 +184,11 @@ export default function DoctorAppointmentsPage() {
         <select
           id="cat"
           value={category}
-          onChange={(e) => setCategory(e.target.value)}
+          onChange={(e) => setCategory(e.target.value as "วันนี้" | "ทั้งหมด")}
           className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="วันนี้">วันนี้</option>
           <option value="ทั้งหมด">ทั้งหมด</option>
+          <option value="วันนี้">วันนี้</option>
         </select>
       </div>
 
