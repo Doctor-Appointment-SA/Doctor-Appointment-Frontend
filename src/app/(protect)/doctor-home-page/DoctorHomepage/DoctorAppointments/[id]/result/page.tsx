@@ -63,6 +63,8 @@ export default function ResultPage() {
     return new Date(record.createdAt * 1000).toLocaleString();
   }, [record?.createdAt]);
 
+  console.log("appointment_id", appointmentId);
+
   /* ---------- Helpers ---------- */
   async function fetchAppointment(aid: string): Promise<Appointment> {
     const access_token = getCookie("access_token");
@@ -196,6 +198,7 @@ export default function ResultPage() {
       );
       if (!r.ok) throw new Error(`Save failed: ${r.status}`);
       await fetchAll();
+      router.push(`/doctor-home-page/doctor-make-appointment?patient_id=${patientId}`);
     } catch (e: any) {
       setErr(e?.message || "Save failed");
     } finally {

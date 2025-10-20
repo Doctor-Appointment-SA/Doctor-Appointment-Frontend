@@ -19,6 +19,7 @@ import {
 } from "@/lib/appointment";
 import { AppointmentProps } from "@/props/AppointmentProps";
 import { UserProps } from "@/props/UserProps";
+import { useRouter, useSearchParams } from "next/navigation";
 const Calendar = dynamic(() => import("@/components/appointment/calendar"), {
   ssr: false,
 });
@@ -31,8 +32,6 @@ interface AppointmentDetail {
   mode: "create" | "update";
   appointmentId?: string;
 }
-
-const patient_id = "d51e5c0a-88ee-478d-b8d2-95010bb650c2";
 
 const toLocalYMD = (d: Date) => {
   const y = d.getFullYear();
@@ -68,6 +67,10 @@ const DoctorMakeAppointment = () => {
     useState<AppointmentDetail | null>(null);
   const [newDetail, setNewDetail] = useState("");
   const [patientData, setPatientData] = useState<UserProps>();
+
+  const param = useSearchParams();
+  const router = useRouter();
+  const patient_id:any = param.get("patient_id");
 
   // fetch start data
   useEffect(() => {
@@ -226,8 +229,8 @@ const DoctorMakeAppointment = () => {
           >
             Back
           </Button>
-          <Button className="min-w-24 rounded-lg bg-black text-white hover:bg-gray-800">
-            Next
+          <Button onClick={()=>router.push("/doctor-home-page/DoctorHomepage")} className="min-w-24 rounded-lg bg-black text-white hover:bg-gray-800">
+            Confirm
           </Button>
         </div>
 
