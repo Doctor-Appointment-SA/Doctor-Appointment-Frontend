@@ -255,7 +255,12 @@ export default function PrescriptionDetail({
                 >
                   {rx?.id ?? "—"}
                 </h1>
+                {/* Patient username on top */}
+                <p className="text-xs mt-1" style={{ color: "var(--muted)" }}>
+                  Username: {rx?.patient_username ?? "—"}
+                </p>
               </div>
+
               <select
                 className="text-xs rounded-lg border px-2 py-1"
                 value={theme}
@@ -267,19 +272,27 @@ export default function PrescriptionDetail({
               </select>
             </div>
 
-            {/* IDs */}
+            {/* Names instead of IDs */}
             <div className="grid grid-cols-2 gap-2">
               <div className="bg-white rounded-xl border px-3 py-2">
                 <label className="block text-[11px]" style={{ color: "var(--muted)" }}>
-                  Doctor ID
+                  Doctor
                 </label>
-                <div className="text-sm font-medium">{rx?.doctor_id ?? "—"}</div>
+                <div className="text-sm font-medium">
+                  {rx?.doctor_name || rx?.doctor_lastname
+                    ? `${rx?.doctor_name ?? ""} ${rx?.doctor_lastname ?? ""}`.trim()
+                    : "—"}
+                </div>
               </div>
               <div className="bg-white rounded-xl border px-3 py-2">
                 <label className="block text-[11px]" style={{ color: "var(--muted)" }}>
-                  Patient ID
+                  Patient
                 </label>
-                <div className="text-sm font-medium">{rx?.patient_id ?? "—"}</div>
+                <div className="text-sm font-medium">
+                  {rx?.patient_name || rx?.patient_lastname
+                    ? `${rx?.patient_name ?? ""} ${rx?.patient_lastname ?? ""}`.trim()
+                    : "—"}
+                </div>
               </div>
             </div>
           </div>
@@ -360,30 +373,23 @@ export default function PrescriptionDetail({
               <p className="text-sm font-medium">
                 รวม: {computedTotal.toFixed(2)} บาท
               </p>
+
               <div className="flex gap-2">
-                {normalizeStatus(rx?.status) !== "awaiting_payment" &&
-                  normalizeStatus(rx?.status) !== "paid" && (
-                    <button
-                      disabled={working || !rx}
-                      onClick={() => patchStatus("awaiting_payment")}
-                      className="rounded-xl px-3 py-2 text-sm"
-                      style={{
-                        background: "var(--btn)",
-                        color: "var(--btnText)",
-                        opacity: working ? 0.6 : 1,
-                      }}
-                    >
-                      Checkout
-                    </button>
-                  )}
-                {normalizeStatus(rx?.status) === "awaiting_payment" && (
+                {normalizeStatus(rx?.status) !== "paid" && (
                   <button
-                    disabled={working || !rx}
-                    onClick={() => patchStatus("paid")}
-                    className="rounded-xl px-3 py-2 text-sm border"
-                    style={{ background: "#fff" }}
+                    disabled={!rx}
+                    onClick={() => {
+                      if (!rx) return;
+                      // Redirect to a payment page for this prescription
+                      window.location.href = `/payment/${rx.id}`;
+                    }}
+                    className="rounded-xl px-3 py-2 text-sm"
+                    style={{
+                      background: "var(--btn)",
+                      color: "var(--btnText)",
+                    }}
                   >
-                    Mark as Paid
+                    Checkout
                   </button>
                 )}
               </div>
