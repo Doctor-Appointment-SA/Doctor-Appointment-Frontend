@@ -17,9 +17,7 @@ export default function PatientAppointmentCard({ item, onDelete }: Props) {
   return (
     <div className="w-full rounded-2xl bg-blue-300/80 px-4 py-3 shadow-sm ring-1 ring-blue-400/50">
       <Link
-        href={`/doctor-home-page/DoctorHomepage/DoctorAppointments/${item.id}?name=${encodeURIComponent(
-          item.name
-        )}&date=${encodeURIComponent(item.date)}&time=${encodeURIComponent(item.time)}`}
+        href={`/doctor-home-page/doctor-manage-appointment`}
         className="flex items-center gap-3"
       >
         <div className="flex min-w-0 flex-1 items-center gap-3">
