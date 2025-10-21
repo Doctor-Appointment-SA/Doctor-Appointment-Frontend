@@ -109,12 +109,12 @@ export default function DoctorAppointmentsPage() {
               year: "numeric",
               month: "short",
               day: "2-digit",
-              timeZone: "UTC",
+              timeZone: "Asia/Bangkok",
             }),
             time: d.toLocaleTimeString("th-TH", {
               hour: "2-digit",
               minute: "2-digit",
-              timeZone: "UTC",
+              timeZone: "Asia/Bangkok",
             }),
           };
         });
