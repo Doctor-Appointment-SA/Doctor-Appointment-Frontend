@@ -13,9 +13,9 @@ export default function PatientLayout({
   const router = useRouter();
 
   // finish fetch, Authorize
-  useEffect(() => {
-    if (user && user?.role !== "patient") router.push("/403"); // authenticated but unauthorized
-  }, [user]);
+  // useEffect(() => {
+  //   if (user && user?.role !== "patient") router.push("/403"); // authenticated but unauthorized
+  // }, [user]);
 
   // user might still be fetching
   if (user === null) return <p>Loading...</p>;
