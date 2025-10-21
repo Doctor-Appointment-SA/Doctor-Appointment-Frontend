@@ -59,7 +59,7 @@ export default function PatientHomePage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
-  const base = process.env.NEXT_PUBLIC_API_BASE;
+  const base = process.env.NEXT_PUBLIC_API_URL_PRO;
 
   useEffect(() => {
     if (!base) {
@@ -155,16 +155,10 @@ export default function PatientHomePage() {
       {/* Buttons */}
       <div className="mt-4 grid gap-4">
         <button
-          onClick={() => router.push("/patient-appointment")}
+          onClick={()=>router.push("/patient-home-page/screening")}
           className="w-full rounded-xl bg-[#8BC3FF] px-4 py-4 text-center text-sm font-medium text-white shadow-sm hover:opacity-95 active:scale-[0.99]"
         >
           ทำรายการ
-        </button>
-        <button
-          onClick={() => router.push("/patient-appointment")}
-          className="w-full rounded-xl bg-[#8BC3FF] px-4 py-4 text-center text-sm font-medium text-white shadow-sm hover:opacity-95 active:scale-[0.99]"
-        >
-          Tracking medicine
         </button>
       </div>
 
@@ -213,17 +207,6 @@ export default function PatientHomePage() {
           </div>
         )}
       </section>
-
-      {/* Sticky Back Button */}
-      <div className="fixed bottom-0 mt-6 flex items-center justify-between rounded-2xl bg-white/90 p-4 shadow-[0_-6px_12px_-6px_rgba(0,0,0,0.08)] backdrop-blur">
-        <button
-          // onClick={() => }
-          className="rounded-lg px-6 py-3 text-sm font-medium bg-[#8BC3FF] "
-          type="button"
-        >
-          ชำระเงิน
-        </button>
-      </div>
     </main>
   );
 }

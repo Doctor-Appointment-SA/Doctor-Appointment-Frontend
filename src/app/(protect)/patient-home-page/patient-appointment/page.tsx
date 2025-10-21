@@ -16,6 +16,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 const Calendar = dynamic(() => import("@/components/appointment/calendar"), {
   ssr: false,
 });
@@ -42,6 +43,8 @@ const PatientAppointmentPage = () => {
   const [appointmentDate, setAppointmentDate] = useState(getTodayThai());
   const [doctorSchedule, setDoctorSchedule] = useState<string[]>([]);
   const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
+
+  const router = useRouter();
 
   // useEffect(() => {
   //   console.log(selectedDoctor);
@@ -117,7 +120,7 @@ const PatientAppointmentPage = () => {
           text="ย้อนกลับ"
           textColor="#1E1E1E"
           bgColor="#E3E3E3"
-          onClick={() => {}}
+          onClick={() => router.push("/patient-home-page")}
         />
         <NavButton
           text="ยืนยัน"

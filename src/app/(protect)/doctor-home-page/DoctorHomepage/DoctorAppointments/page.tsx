@@ -28,6 +28,7 @@ function startOfTodayLocalISO() {
 export default function DoctorAppointmentsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const status = searchParams.get("status") || '';
   const { user } = useAuth();
 
   const [query, setQuery] = useState("");
@@ -44,8 +45,8 @@ export default function DoctorAppointmentsPage() {
       setItems([]); // กันค้างรายการของหมอเก่า
 
       try {
-        const base = process.env.NEXT_PUBLIC_API_BASE;
-        if (!base) throw new Error("NEXT_PUBLIC_API_BASE is not set");
+        const base = process.env.NEXT_PUBLIC_API_URL_PRO;
+        if (!base) throw new Error("NEXT_PUBLIC_API_URL_PRO is not set");
 
         // read token inside effect
         const access_token = getCookie("access_token");
@@ -208,6 +209,7 @@ export default function DoctorAppointmentsPage() {
             <PatientAppointmentCard
               key={item.id}
               item={item}
+              status={status}
               onDelete={handleDelete}
             />
           ))}

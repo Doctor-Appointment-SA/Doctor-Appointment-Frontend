@@ -6,7 +6,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getCookie } from "@/lib/authentication";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL_PRO;
 
 /* ---------- Types ---------- */
 type Appointment = {
@@ -62,6 +62,8 @@ export default function ResultPage() {
     if (!record?.createdAt) return "-";
     return new Date(record.createdAt * 1000).toLocaleString();
   }, [record?.createdAt]);
+
+  console.log("appointment_id", appointmentId);
 
   /* ---------- Helpers ---------- */
   async function fetchAppointment(aid: string): Promise<Appointment> {
@@ -196,6 +198,7 @@ export default function ResultPage() {
       );
       if (!r.ok) throw new Error(`Save failed: ${r.status}`);
       await fetchAll();
+      router.push(`/doctor-home-page/pharmacy?patient_id=${patientId}&doctor_id=${doctorId}`);
     } catch (e: any) {
       setErr(e?.message || "Save failed");
     } finally {

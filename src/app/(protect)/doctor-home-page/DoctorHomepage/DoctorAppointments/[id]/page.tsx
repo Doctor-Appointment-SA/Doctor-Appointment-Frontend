@@ -2,7 +2,7 @@
 // File: src/app/doctor/appointments/[id]/page.tsx
 "use client";
 import React, { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { getCookie } from "@/lib/authentication";
 
 export type PatientDetails = {
@@ -77,8 +77,8 @@ export default function AppointmentDetailPage() {
       setLoading(true);
       setErr(null);
       try {
-        const base = process.env.NEXT_PUBLIC_API_BASE;
-        if (!base) throw new Error("NEXT_PUBLIC_API_BASE is not set");
+        const base = process.env.NEXT_PUBLIC_API_URL_PRO;
+        if (!base) throw new Error("NEXT_PUBLIC_API_URL_PRO is not set");
 
         // 1) ดึงนัด (เส้นทาง backend ของคุณเป็นพหูพจน์)
         console.log("appointment_id: ", id);

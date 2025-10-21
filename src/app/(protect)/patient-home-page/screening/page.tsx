@@ -2,9 +2,10 @@
 
 import React, { useMemo, useState } from "react";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 
 /** Adjust this to your backend */
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL_PHA;
 const API = {
   submit: `${API_BASE}/screening`, // POST
 };
@@ -34,6 +35,8 @@ export default function ScreeningPage() {
 
   const [submitting, setSubmitting] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+
+  const router = useRouter();
 
   const payload = useMemo(
     () => ({
@@ -65,17 +68,20 @@ export default function ScreeningPage() {
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (token) headers.Authorization = `Bearer ${token}`;
 
-      const res = await axios.post(
-        API.submit,
-        { ...payload, action }, // backend can branch on this
-        { headers }
-      );
+      // const res = await axios.post(
+      //   API.submit,
+      //   { ...payload, action }, // backend can branch on this
+      //   { headers }
+      // );
 
       setMsg(
         action === "receive_medicine"
           ? "บันทึกแบบคัดกรองและส่งไปรับยาแล้ว ✅"
           : "บันทึกแบบคัดกรองและส่งไปจองคิวแล้ว ✅"
       );
+
+      if (action === "book_appointment") router.push("/patient-home-page/patient-appointment");
+      if (action === "receive_medicine") router.push("/patient-home-page/prescription");
     } catch (e: any) {
       const status = e?.response?.status;
       const text =

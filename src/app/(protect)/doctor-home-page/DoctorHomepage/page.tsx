@@ -59,14 +59,6 @@ async function resolveDoctorId(base: string): Promise<string | null> {
   return null;
 }
 
-function getStartOfTodayLocalISO() {
-  const now = new Date();
-  const startLocal = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-  // แปลงเป็น ISO (UTC) เพื่อส่งให้ backend
-  return startLocal.toISOString();
-}
-
-
 /** ---------------- Page ---------------- */
 export default function DoctorHomepage() {
   const [doctorId, setDoctorId] = useState<string>();
@@ -89,56 +81,57 @@ export default function DoctorHomepage() {
       setErr(null);
 
       try {
-        const base = process.env.NEXT_PUBLIC_API_BASE;
-        if (!base) throw new Error("NEXT_PUBLIC_API_BASE is not set");
+        const base = process.env.NEXT_PUBLIC_API_URL_PRO;
+        if (!base) throw new Error("NEXT_PUBLIC_API_URL_PRO is not set");
 
-        // 1) หา doctorId (ใช้ user?.id ถ้ามี ไม่งั้น fallback ไป resolveDoctorId)
-        let id = user?.id;
-        if (!id) {
-          id = await resolveDoctorId(base);
-        }
-        setDoctorId(id || undefined);
+        // 1) หา doctorId
+        // const id = await resolveDoctorId(base);
+        
+        const id = user?.id;
+        setDoctorId(id);
         console.log("doctor_id", id);
 
         // 2) ดึงชื่อหมอ
         if (id) {
           try {
-            const res = await fetch(`${base}/doctor/${id}`, {
+            const res = await fetch(`${base}/api/doctor/${id}`, {
               cache: "no-store",
               credentials: "include",
             });
             if (res.ok) {
               const doc: DoctorProfile = await res.json();
-              const nm = [doc.user?.name, doc.user?.lastname].filter(Boolean).join(" ").trim();
+              const nm = [doc.user?.name, doc.user?.lastname]
+                .filter(Boolean)
+                .join(" ")
+                .trim();
               setDoctorName(nm || null);
             }
-          } catch { /* ignore */ }
+          } catch {
+            /* ไม่เป็นไร */
+          }
         }
 
-        // 3) นับ "ที่จะมาในอนาคต รวมวันนี้" ด้วย dateFrom = ต้นวัน (local)
-        const dateFrom = getStartOfTodayLocalISO();
+        // 3) นับจำนวนแต่ละสถานะ (CONFIRMED / PENDING)
+        // หมายเหตุ: ถ้า backend มี /appointments/count ให้สลับไปใช้ endpoint นั้นได้
+        const nowIso = new Date().toISOString();
 
-        const buildQS = (status: "CONFIRMED" | "PENDING", doctorId?: string | null) => {
-          const qs = new URLSearchParams();
-          qs.set("status", status);      // ตัวพิมพ์ใหญ่ตรงกับหลังบ้าน
-          qs.set("dateFrom", dateFrom);  // รวมทั้งวันของวันนี้
-          qs.set("take", "9999");        // ถ้า backend รองรับ pagination (กันนับไม่ครบ)
-          if (doctorId) qs.set("doctorId", doctorId);
-          return qs.toString();
-        };
+        const qsConfirmed = new URLSearchParams();
+        qsConfirmed.set("status", "CONFIRMED");
+        qsConfirmed.set("dateFrom", nowIso); // เอาเฉพาะนัดในอนาคต
+        if (id) qsConfirmed.set("doctorId", id);
+
+        const qsPending = new URLSearchParams();
+        qsPending.set("status", "PENDING");
+        qsPending.set("dateFrom", nowIso);
+        if (id) qsPending.set("doctorId", id);
 
         const [resC, resP] = await Promise.all([
-          fetch(`${base}/appointments?${buildQS("CONFIRMED", id)}`, {
-            cache: "no-store",
-            credentials: "include",
-          }),
-          fetch(`${base}/appointments?${buildQS("PENDING", id)}`, {
-            cache: "no-store",
-            credentials: "include",
-          }),
+          fetch(`${base}/appointments?${qsConfirmed.toString()}`),
+          fetch(`${base}/appointments?${qsPending.toString()}`),
         ]);
 
-        if (!resC.ok) throw new Error(`Fetch confirmed failed (${resC.status})`);
+        if (!resC.ok)
+          throw new Error(`Fetch confirmed failed (${resC.status})`);
         if (!resP.ok) throw new Error(`Fetch pending failed (${resP.status})`);
 
         const arrC: unknown[] = await resC.json();
