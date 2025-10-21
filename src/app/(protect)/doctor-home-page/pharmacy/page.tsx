@@ -152,7 +152,7 @@ export default function PharmacyPage() {
       setGlobalNote("");
       setFollowUp(false);
 
-      router.push("/doctor-home-page/doctor-make-appointment");
+      router.push(`/doctor-home-page/doctor-make-appointment?patient_id=${patient_id}`);
     } catch (e: any) {
       // show backend’s reason
       const status = e?.response?.status;

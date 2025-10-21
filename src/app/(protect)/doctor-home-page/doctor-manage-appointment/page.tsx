@@ -16,6 +16,7 @@ import {
 } from "@/lib/appointment";
 import { AppointmentProps } from "@/props/AppointmentProps";
 import { UserProps } from "@/props/UserProps";
+import { useRouter } from "next/navigation";
 const Calendar = dynamic(() => import("@/components/appointment/calendar"), {
   ssr: false,
 });
@@ -64,6 +65,8 @@ const DoctorManageAppointment = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] =
     useState<AppointmentProps | null>(null);
+
+  const router = useRouter();
 
   const fetchData = async () => {
     const appointmentData = await getDoctorAppointments("CONFIRMED");
@@ -237,8 +240,8 @@ const DoctorManageAppointment = () => {
           >
             Back
           </Button>
-          <Button className="min-w-24 rounded-lg bg-black text-white hover:bg-gray-800">
-            Next
+          <Button className="min-w-24 rounded-lg bg-black text-white hover:bg-gray-800" onClick={()=>router.push("/doctor-home-page/DoctorHomepage")}>
+            Confirm
           </Button>
         </div>
         
