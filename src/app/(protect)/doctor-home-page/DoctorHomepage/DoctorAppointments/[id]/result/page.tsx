@@ -198,7 +198,7 @@ export default function ResultPage() {
       );
       if (!r.ok) throw new Error(`Save failed: ${r.status}`);
       await fetchAll();
-      router.push(`/doctor-home-page/doctor-make-appointment?patient_id=${patientId}`);
+      router.push(`/doctor-home-page/pharmacy?patient_id=${patientId}&doctor_id=${doctorId}`);
     } catch (e: any) {
       setErr(e?.message || "Save failed");
     } finally {

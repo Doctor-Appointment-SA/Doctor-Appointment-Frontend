@@ -2,6 +2,8 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import { useRouter, useSearchParams } from "next/navigation";
+import { getCookie } from "@/lib/authentication";
 
 /* ========= TYPES ========= */
 type Medicine = {
@@ -26,7 +28,7 @@ export default function PharmacyPage() {
   /* IDs from backend (read-only) */
   const [doctorId, setDoctorId] = useState<string>("");
   const [patientId, setPatientId] = useState<string>("");
-  const [ctxLoading, setCtxLoading] = useState(true);
+  const [ctxLoading, setCtxLoading] = useState(false);
 
   /* data */
   const [query, setQuery] = useState("");
@@ -40,24 +42,30 @@ export default function PharmacyPage() {
   const [submitting, setSubmitting] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
+  const params = useSearchParams();
+  const patient_id = params.get("patient_id") || "";
+  const doctor_id = params.get("doctor_id") || "";
+
+  console.log("patient_id", patient_id);
   /* fetch context (doctor/patient) */
   useEffect(() => {
-    (async () => {
-      try {
-        const res = await axios.get<{ doctor_id: string; patient_id: string }>(
-          API.context
-        );
-        setDoctorId(res.data.doctor_id);
-        setPatientId(res.data.patient_id);
-      } catch (e) {
-        console.error("context fetch failed", e);
-        // fallback demo values so UI still works
-        setDoctorId("doc_demo_public");
-        setPatientId("pat_demo_001");
-      } finally {
-        setCtxLoading(false);
-      }
-    })();
+    //   try {
+    //     const res = await axios.get<{ doctor_id: string; patient_id: string }>(
+    //       API.context
+    //     );
+    //     setDoctorId(res.data.doctor_id);
+    //     setPatientId(res.data.patient_id);
+    //   } catch (e) {
+    //     console.error("context fetch failed", e);
+    //     // fallback demo values so UI still works
+    //     setDoctorId("doc_demo_public");
+    //     setPatientId("pat_demo_001");
+    //   } finally {
+    //     setCtxLoading(false);
+    //   }
+    // })();
+    setDoctorId(doctor_id);
+    setPatientId(patient_id);
   }, []);
 
   /* fetch medicines */
@@ -105,10 +113,11 @@ export default function PharmacyPage() {
       qty <= 0
         ? curr.filter((c) => c.medicine.id !== id)
         : curr.map((c) =>
-          c.medicine.id === id ? { ...c, qty: Math.floor(qty) } : c
-        )
+            c.medicine.id === id ? { ...c, qty: Math.floor(qty) } : c
+          )
     );
 
+  const router = useRouter();
   const submit = async () => {
     setMsg(null);
 
@@ -129,8 +138,10 @@ export default function PharmacyPage() {
       };
 
       // attach token only if available; still send even if missing
-      const token = localStorage.getItem("access_token");
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      const token = getCookie("access_token");
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
       if (token) headers.Authorization = `Bearer ${token}`;
 
       await axios.post(API.createPrescription, payload, { headers });
@@ -140,17 +151,20 @@ export default function PharmacyPage() {
       setItems([]);
       setGlobalNote("");
       setFollowUp(false);
+
+      router.push("/doctor-home-page/doctor-make-appointment");
     } catch (e: any) {
       // show backend’s reason
       const status = e?.response?.status;
-      if (status === 401) setMsg("ถูกปฏิเสธโดยเซิร์ฟเวอร์: ต้องเข้าสู่ระบบ (401)");
-      else if (status === 403) setMsg("ถูกปฏิเสธโดยเซิร์ฟเวอร์: ไม่มีสิทธิ์ (403)");
+      if (status === 401)
+        setMsg("ถูกปฏิเสธโดยเซิร์ฟเวอร์: ต้องเข้าสู่ระบบ (401)");
+      else if (status === 403)
+        setMsg("ถูกปฏิเสธโดยเซิร์ฟเวอร์: ไม่มีสิทธิ์ (403)");
       else setMsg(e?.response?.data?.message ?? "ส่งไม่สำเร็จ");
     } finally {
       setSubmitting(false);
     }
   };
-
 
   return (
     <div className="min-h-[100dvh] flex justify-center bg-slate-50">
@@ -260,7 +274,9 @@ export default function PharmacyPage() {
                   <div key={it.medicine.id} className="border rounded-xl p-2">
                     <div className="flex justify-between items-center">
                       <div>
-                        <p className="text-sm font-medium">{it.medicine.name}</p>
+                        <p className="text-sm font-medium">
+                          {it.medicine.name}
+                        </p>
                         <p className="text-xs text-gray-600">
                           {it.medicine.strength ?? ""}
                           {it.medicine.form ? ` · ${it.medicine.form}` : ""}
@@ -275,7 +291,10 @@ export default function PharmacyPage() {
                           onChange={(e) =>
                             setQty(
                               it.medicine.id,
-                              Math.max(1, Math.floor(Number(e.target.value) || 1))
+                              Math.max(
+                                1,
+                                Math.floor(Number(e.target.value) || 1)
+                              )
                             )
                           }
                         />
@@ -330,8 +349,9 @@ export default function PharmacyPage() {
                 </div>
                 {msg && (
                   <p
-                    className={`text-sm mt-1 ${msg.includes("✅") ? "text-emerald-600" : "text-red-600"
-                      }`}
+                    className={`text-sm mt-1 ${
+                      msg.includes("✅") ? "text-emerald-600" : "text-red-600"
+                    }`}
                   >
                     {msg}
                   </p>
