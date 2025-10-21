@@ -28,6 +28,7 @@ function startOfTodayLocalISO() {
 export default function DoctorAppointmentsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const status = searchParams.get("status") || '';
   const { user } = useAuth();
 
   const [query, setQuery] = useState("");
@@ -208,6 +209,7 @@ export default function DoctorAppointmentsPage() {
             <PatientAppointmentCard
               key={item.id}
               item={item}
+              status={status}
               onDelete={handleDelete}
             />
           ))}

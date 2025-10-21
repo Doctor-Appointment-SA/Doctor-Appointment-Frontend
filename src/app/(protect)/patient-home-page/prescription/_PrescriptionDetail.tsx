@@ -2,6 +2,8 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/authen/AuthProvider";
 
 /* ========= THEME TOKENS ========= */
 type ThemeName = "light" | "indigo" | "emerald";
@@ -114,12 +116,10 @@ const isUuidLike = (v: string) =>
     v
   );
 
-export default function PrescriptionDetail({
-  params,
-}: {
-  params: { id: string }; // already unwrapped in [id]/page.tsx
-}) {
-  const patientId = params.id; // route is always patientId now
+export default function PrescriptionDetail() {
+  const {user} = useAuth();
+  // const patientId = params.id; // route is always patientId now
+  const patientId = user?.id || '';
 
   /* theme */
   const [theme, setTheme] = useState<ThemeName>("light");
@@ -136,7 +136,9 @@ export default function PrescriptionDetail({
   const [msg, setMsg] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
 
-  const idLooksValid = isUuidLike(patientId);
+  const router = useRouter();
+
+  const idLooksValid = isUuidLike(patientId || '');
 
   /* fetch LATEST prescription by patientId (single call) */
   useEffect(() => {
@@ -414,7 +416,7 @@ export default function PrescriptionDetail({
                     onClick={() => {
                       if (!rx) return;
                       // Redirect to a payment page for this prescription
-                      window.location.href = `/payment/${rx.id}`;
+                      router.push(`/patient-home-page/payment/${rx.id}`);
                     }}
                     className="rounded-xl px-3 py-2 text-sm"
                     style={{
