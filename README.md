@@ -39,13 +39,14 @@ NEXT_PUBLIC_PAYMENT_URL=http://localhost:4005
 
 # Contribution
 
-1. พสิษฐ์ พิศาลอัครเลิศกุล https://github.com/Doctor-Appointment-SA/Authentication-Service.git
-   ทำ Service การทำ Authentication ทั้งหน้าบ้านหลังบ้าน
-2. มติ วรสิงห์ ทำ Service การทำ Profile (Doctor, Patient Homepage)  
-    ทั้งหน้างบ้านและหลังบ้าน
-3. พัชรพล ธูปประสม Github: Patcharaphol https://github.com/Doctor-Appointment-SA/Scheduling-Service.git
-   ทำ Service การทำ Appointment ทั้งหน้าบ้านหลังบ้าน
-4. กฤติน ชัยอุดมกิจ ทำ Service การทำ Pharmacy ทั้งหน้าบ้านหลังบ้าน
+ทุกคนพัฒนา service ของตัวเอง **ทั้งหน้าบ้านและหลังบ้าน**
+
+| ผู้พัฒนา | ส่วนที่รับผิดชอบ | Repository |
+|---|---|---|
+| **พสิษฐ์ พิศาลอัครเลิศกุล**<br>[@SwiftkeyX](https://github.com/SwiftkeyX) | Authentication, Payment | [Authentication-Service](https://github.com/Doctor-Appointment-SA/Authentication-Service) · [Payment-Service](https://github.com/Doctor-Appointment-SA/Payment-Service) |
+| **มติ วรสิงห์**<br>[@gitrinz99](https://github.com/gitrinz99) | Profile (Doctor / Patient Homepage) | [svc-doctor-profile](https://github.com/Doctor-Appointment-SA/svc-doctor-profile) |
+| **พัชรพล ธูปประสม**<br>[@PatcharapholTooprrasom](https://github.com/PatcharapholTooprrasom) | Appointment, Infrastructure | [Scheduling-Service](https://github.com/Doctor-Appointment-SA/Scheduling-Service) · [Infra](https://github.com/Doctor-Appointment-SA/Infra) |
+| **กฤติน ชัยอุดมกิจ** | Pharmacy | [svc-pharmacy](https://github.com/Doctor-Appointment-SA/svc-pharmacy) |
 
 # System Architecture
 
