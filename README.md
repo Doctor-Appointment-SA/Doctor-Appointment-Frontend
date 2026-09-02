@@ -3,10 +3,10 @@
 repo นี่เป็น Frontend สำหรับระบบนัดหมายแพทย์ ใช้ Next.js โดยทั้งทีมจะใช้ repo frontend อันเดียวกัน แต่เชื่อมต่อกับหลาย backend service ที่แยก repo กัน:
 
 - Authentication https://github.com/Doctor-Appointment-SA/Authentication-Service.git
-- User Profile
+- User Profile https://github.com/Doctor-Appointment-SA/svc-doctor-profile
 - Appointment https://github.com/Doctor-Appointment-SA/Scheduling-Service.git
-- Pharmacy
-- Payment
+- Pharmacy https://github.com/Doctor-Appointment-SA/svc-pharmacy
+- Payment https://github.com/Doctor-Appointment-SA/Payment-Service
 
 # Tech Stack
 
